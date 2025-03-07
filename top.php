@@ -190,7 +190,7 @@ get_header();
 </section>
 
 <!-- AIツール一覧セクション -->
-<section class="ai-tools">
+<section class="ai-tools" id="ai-tools-list">
     <div class="container">
         <h2 class="section-title">生成AI一覧</h2>
         <p class="section-subtitle">副業に役立つ厳選された生成AIツールを紹介。作業効率を高め、クオリティを向上させよう</p>
