@@ -10,57 +10,6 @@ get_header();
 
 
 <style>
-    /* リセットとベーススタイル */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
-    }
-
-    :root {
-        --main-color: #6b9ade;
-        /* メインカラー - 落ち着いた中間の青 */
-        --main-dark: #3a6ea5;
-        /* メインカラーの暗め版 - アクセントや重要な要素に */
-        --main-light: #d0e1ff;
-        /* メインカラーの明るい版 - 背景などに */
-        --accent: #9cc0ff;
-        /* アクセントカラー - 補助的な強調に */
-        --text: #2c3e50;
-        /* 本文テキスト - 読みやすい暗めの色 */
-        --text-light: #647789;
-        /* 補助テキスト - サブテキストや説明文に */
-        --bg: #ffffff;
-        /* メイン背景色 - 白 */
-        --bg-light: #f5f9ff;
-        /* 明るい背景色 - 微かな青みがかった白 */
-        --bg-alt: #e9f2ff;
-        /* 代替背景色 - 薄い青 */
-        --border: #d8e6ff;
-        /* 境界線 - 優しい青みの境界線 */
-        --shadow: 0 2px 10px rgba(107, 154, 222, 0.08);
-        /* 影 - 青みがかった影 */
-        --radius: 12px;
-        /* 角丸の半径 */
-    }
-
-    body {
-        background-color: var(--bg-light);
-        color: var(--text);
-        line-height: 1.6;
-    }
-
-    a {
-        text-decoration: none;
-        color: var(--main-color);
-        transition: all 0.3s ease;
-    }
-
-    a:hover {
-        color: var(--main-dark);
-    }
-
     img {
         max-width: 100%;
         height: auto;
@@ -136,69 +85,6 @@ get_header();
         margin-left: auto;
         margin-right: auto;
         font-size: 17px;
-    }
-
-    /* ヘッダースタイル */
-    header {
-        background-color: var(--bg);
-        box-shadow: var(--shadow);
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-    }
-
-    .navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 0;
-    }
-
-    .logo {
-        font-size: 26px;
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    .logo span {
-        color: var(--main-color);
-    }
-
-    .nav-menu {
-        display: flex;
-        gap: 35px;
-    }
-
-    .nav-menu a {
-        color: var(--text);
-        font-weight: 500;
-        position: relative;
-    }
-
-    .nav-menu a::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 2px;
-        background-color: var(--main-color);
-        bottom: -4px;
-        left: 0;
-        transition: width 0.3s ease;
-    }
-
-    .nav-menu a:hover,
-    .nav-menu a.active {
-        color: var(--main-color);
-    }
-
-    .nav-menu a:hover::after,
-    .nav-menu a.active::after {
-        width: 100%;
-    }
-
-    .nav-buttons {
-        display: flex;
-        gap: 15px;
     }
 
     /* ページヘッダー */

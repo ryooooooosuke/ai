@@ -5,72 +5,6 @@
  */
 get_header(); ?>
 <style>
-    /* リセットとベーススタイル */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
-    }
-
-    body {
-        background-color: var(--bg-light);
-        color: var(--text);
-        line-height: 1.6;
-    }
-
-    a {
-        text-decoration: none;
-        color: var(--main-color);
-        transition: all 0.3s ease;
-    }
-
-    a:hover {
-        color: var(--main-dark);
-    }
-
-    img {
-        max-width: 100%;
-        height: auto;
-    }
-
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    .btn {
-        display: inline-block;
-        background-color: var(--main-color);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 2px 5px rgba(170, 187, 204, 0.3);
-    }
-
-    .btn:hover {
-        background-color: var(--main-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(170, 187, 204, 0.4);
-    }
-
-    .btn-outline {
-        background-color: transparent;
-        border: 2px solid var(--main-color);
-        color: var(--main-color);
-        box-shadow: none;
-    }
-
-    .btn-outline:hover {
-        background-color: var(--main-color);
-        color: white;
-    }
-
     .section {
         padding: 70px 0;
     }
@@ -106,68 +40,6 @@ get_header(); ?>
         font-size: 17px;
     }
 
-    /* ヘッダースタイル */
-    header {
-        background-color: var(--bg);
-        box-shadow: var(--shadow);
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-    }
-
-    .navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 0;
-    }
-
-    .logo {
-        font-size: 26px;
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    .logo span {
-        color: var(--main-color);
-    }
-
-    .nav-menu {
-        display: flex;
-        gap: 35px;
-    }
-
-    .nav-menu a {
-        color: var(--text);
-        font-weight: 500;
-        position: relative;
-    }
-
-    .nav-menu a::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 2px;
-        background-color: var(--main-color);
-        bottom: -4px;
-        left: 0;
-        transition: width 0.3s ease;
-    }
-
-    .nav-menu a:hover,
-    .nav-menu a.active {
-        color: var(--main-color);
-    }
-
-    .nav-menu a:hover::after,
-    .nav-menu a.active::after {
-        width: 100%;
-    }
-
-    .nav-buttons {
-        display: flex;
-        gap: 15px;
-    }
 
     /* ページヘッダー */
     .page-header {
@@ -910,19 +782,6 @@ get_header(); ?>
 
         .guide-article-content h4 {
             font-size: 18px;
-        }
-
-        .footer-grid {
-            grid-template-columns: 1fr;
-            gap: 30px;
-        }
-
-        .cta-container {
-            padding: 30px 20px;
-        }
-
-        .cta-title {
-            font-size: 26px;
         }
     }
 </style>

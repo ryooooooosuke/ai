@@ -100,6 +100,9 @@ if (!defined('ABSPATH')) exit; ?>
             /* 影 - 青みがかった影 */
             --radius: 12px;
             /* 角丸の半径 */
+            --error: #e53e3e;
+            --success: #38a169;
+            --warning: #e8b21e;
         }
 
         body {
