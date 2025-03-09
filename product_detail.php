@@ -1355,6 +1355,11 @@
             border-top: 1px solid var(--border);
         }
 
+        .related-tools-actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+
         /* レスポンシブ対応 */
         @media (max-width: 1024px) {
 
@@ -1498,7 +1503,7 @@
                 <div class="product-rating">
                     <div class="stars">★★★★★</div>
                     <div class="rating-value">4.9</div>
-                    <div class="rating-count">(235件の評価)</div>
+                    <div class="rating-count">おすすめ評価</div>
                 </div>
             </div>
             <div class="product-actions">
