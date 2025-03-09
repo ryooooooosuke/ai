@@ -201,8 +201,6 @@ function ai_tools_pricing_plans_callback($post)
                                                             <option value="month" <?php selected($plan['period'], 'month'); ?>>月額</option>
                                                             <option value="year" <?php selected($plan['period'], 'year'); ?>>年額</option>
                                                             <option value="one_time" <?php selected($plan['period'], 'one_time'); ?>>一括</option>
-                                                            <option value="one_time" <?php selected($plan['period'], 'one_time'); ?>>一括</option>
-
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1433,3 +1431,300 @@ function save_ai_tools_rating($post_id)
     }
 }
 add_action('save_post', 'save_ai_tools_rating');
+
+
+/**
+ * AIカテゴリにアイコン画像フィールドを追加
+ */
+function ai_category_add_image_field()
+{
+    // カテゴリー追加フォームにフィールドを追加
+?>
+    <div class="form-field term-image-wrap">
+        <label for="ai_category_image">カテゴリーアイコン</label>
+        <div class="category-image-container">
+            <div class="category-image-preview">
+                <img src="" style="max-width: 100px; max-height: 100px; display: none;" />
+            </div>
+            <input type="hidden" id="ai_category_image" name="ai_category_image" value="" />
+            <button type="button" class="button button-secondary ai-upload-image">画像をアップロード</button>
+            <button type="button" class="button button-secondary ai-remove-image" style="display:none;">画像を削除</button>
+        </div>
+        <p class="description">このカテゴリーを表すアイコン画像を設定します（推奨サイズ: 100x100px）</p>
+    </div>
+<?php
+}
+add_action('ai_category_add_form_fields', 'ai_category_add_image_field', 10);
+
+/**
+ * AIカテゴリ編集フォームにアイコン画像フィールドを追加
+ */
+function ai_category_edit_image_field($term)
+{
+    // 既存のアイコン画像を取得
+    $image_id = get_term_meta($term->term_id, 'ai_category_image', true);
+    $image_url = '';
+
+    if ($image_id) {
+        $image_url = wp_get_attachment_image_url($image_id, 'thumbnail');
+    }
+
+?>
+    <tr class="form-field term-image-wrap">
+        <th scope="row"><label for="ai_category_image">カテゴリーアイコン</label></th>
+        <td>
+            <div class="category-image-container">
+                <div class="category-image-preview">
+                    <?php if ($image_url) : ?>
+                        <img src="<?php echo esc_url($image_url); ?>" style="max-width: 100px; max-height: 100px;" />
+                    <?php else : ?>
+                        <img src="" style="max-width: 100px; max-height: 100px; display: none;" />
+                    <?php endif; ?>
+                </div>
+                <input type="hidden" id="ai_category_image" name="ai_category_image" value="<?php echo esc_attr($image_id); ?>" />
+                <button type="button" class="button button-secondary ai-upload-image">
+                    <?php echo $image_id ? '画像を変更' : '画像をアップロード'; ?>
+                </button>
+                <?php if ($image_id) : ?>
+                    <button type="button" class="button button-secondary ai-remove-image">画像を削除</button>
+                <?php else : ?>
+                    <button type="button" class="button button-secondary ai-remove-image" style="display:none;">画像を削除</button>
+                <?php endif; ?>
+            </div>
+            <p class="description">このカテゴリーを表すアイコン画像を設定します（推奨サイズ: 100x100px）</p>
+        </td>
+    </tr>
+    <?php
+}
+add_action('ai_category_edit_form_fields', 'ai_category_edit_image_field', 10, 1);
+
+/**
+ * AIカテゴリにメディアアップローダーのJavaScriptを追加
+ */
+function ai_category_image_enqueue_scripts()
+{
+    $screen = get_current_screen();
+
+    // 'edit-ai_category'はAIカテゴリの編集画面のID
+    if ($screen && ($screen->id === 'edit-ai_category' || $screen->id === 'ai_tool')) {
+        wp_enqueue_media();
+
+        // インラインスクリプトの追加
+    ?>
+        <script type="text/javascript">
+            jQuery(document).ready(function($) {
+                // 画像アップロードボタンのクリックイベント
+                $(document).on('click', '.ai-upload-image', function(e) {
+                    e.preventDefault();
+
+                    var button = $(this);
+                    var container = button.closest('.category-image-container');
+                    var imageIdInput = container.find('input[type="hidden"]');
+                    var previewImg = container.find('.category-image-preview img');
+                    var removeButton = container.find('.ai-remove-image');
+
+                    // メディアアップローダーの作成
+                    var mediaUploader = wp.media({
+                        title: 'カテゴリーアイコンを選択',
+                        button: {
+                            text: '選択'
+                        },
+                        multiple: false
+                    });
+
+                    // 画像が選択されたときの処理
+                    mediaUploader.on('select', function() {
+                        var attachment = mediaUploader.state().get('selection').first().toJSON();
+
+                        // 画像IDを保存
+                        imageIdInput.val(attachment.id);
+
+                        // プレビュー画像を更新
+                        previewImg.attr('src', attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url);
+                        previewImg.show();
+
+                        // ボタンのテキストを変更
+                        button.text('画像を変更');
+
+                        // 削除ボタンを表示
+                        removeButton.show();
+                    });
+
+                    // メディアアップローダーを開く
+                    mediaUploader.open();
+                });
+
+                // 画像削除ボタンのクリックイベント
+                $(document).on('click', '.ai-remove-image', function(e) {
+                    e.preventDefault();
+
+                    var button = $(this);
+                    var container = button.closest('.category-image-container');
+                    var imageIdInput = container.find('input[type="hidden"]');
+                    var previewImg = container.find('.category-image-preview img');
+                    var uploadButton = container.find('.ai-upload-image');
+
+                    // 画像IDをクリア
+                    imageIdInput.val('');
+
+                    // プレビュー画像を非表示
+                    previewImg.attr('src', '').hide();
+
+                    // ボタンのテキストを変更
+                    uploadButton.text('画像をアップロード');
+
+                    // 削除ボタンを非表示
+                    button.hide();
+                });
+            });
+        </script>
+    <?php
+    }
+}
+add_action('admin_footer', 'ai_category_image_enqueue_scripts');
+
+/**
+ * AIカテゴリ保存時に画像IDを保存
+ */
+function ai_category_save_image_field($term_id)
+{
+    if (isset($_POST['ai_category_image'])) {
+        $image_id = intval($_POST['ai_category_image']);
+        update_term_meta($term_id, 'ai_category_image', $image_id);
+    }
+}
+add_action('edited_ai_category', 'ai_category_save_image_field', 10, 1);
+add_action('created_ai_category', 'ai_category_save_image_field', 10, 1);
+
+/**
+ * AIカテゴリ一覧にサムネイル列を追加
+ */
+function ai_category_add_image_column($columns)
+{
+    $new_columns = array();
+
+    foreach ($columns as $key => $value) {
+        // 名前列の後にアイコン列を追加
+        if ($key === 'name') {
+            $new_columns[$key] = $value;
+            $new_columns['ai_category_icon'] = 'アイコン';
+        } else {
+            $new_columns[$key] = $value;
+        }
+    }
+
+    return $new_columns;
+}
+add_filter('manage_edit-ai_category_columns', 'ai_category_add_image_column');
+
+/**
+ * AIカテゴリ一覧のサムネイル列に画像を表示
+ */
+function ai_category_image_column_content($content, $column_name, $term_id)
+{
+    if ($column_name === 'ai_category_icon') {
+        $image_id = get_term_meta($term_id, 'ai_category_image', true);
+
+        if ($image_id) {
+            $image_url = wp_get_attachment_image_url($image_id, 'thumbnail');
+            $content = '<img src="' . esc_url($image_url) . '" alt="" style="max-width: 50px; max-height: 50px;" />';
+        } else {
+            $content = '<span class="dashicons dashicons-format-image" style="color:#ccc;"></span>';
+        }
+    }
+
+    return $content;
+}
+add_filter('manage_ai_category_custom_column', 'ai_category_image_column_content', 10, 3);
+
+// ピックアップコンテンツ
+
+/**
+ * 投稿にピックアップ用のメタボックスを追加
+ */
+function add_pickup_meta_box()
+{
+    add_meta_box(
+        'pickup_meta_box',           // ID
+        'ピックアップ設定',            // タイトル
+        'display_pickup_meta_box',   // コールバック関数
+        'post',                      // 投稿タイプ
+        'side',                      // 表示位置（サイドバー）
+        'high'                       // 優先度
+    );
+}
+add_action('add_meta_boxes', 'add_pickup_meta_box');
+
+/**
+ * ピックアップメタボックスの表示
+ */
+function display_pickup_meta_box($post)
+{
+    // nonceフィールドを追加
+    wp_nonce_field(basename(__FILE__), 'pickup_meta_box_nonce');
+
+    // 現在の値を取得
+    $is_pickup = get_post_meta($post->ID, '_is_pickup', true);
+
+    // チェックボックスを表示
+    ?>
+    <div class="pickup-option">
+        <label for="is_pickup">
+            <input type="checkbox" name="is_pickup" id="is_pickup" value="1" <?php checked($is_pickup, '1'); ?> />
+            この投稿をピックアップ記事としてマークする
+        </label>
+        <p class="description">ピックアップとしてマークされた記事は、投稿一覧で強調表示されます。</p>
+    </div>
+    <style>
+        .pickup-option {
+            padding: 5px 0;
+        }
+
+        .pickup-option label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .pickup-option input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .pickup-option .description {
+            margin-top: 5px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+<?php
+}
+
+/**
+ * ピックアップのメタデータを保存
+ */
+function save_pickup_meta($post_id)
+{
+    // nonceの確認
+    if (!isset($_POST['pickup_meta_box_nonce']) || !wp_verify_nonce($_POST['pickup_meta_box_nonce'], basename(__FILE__))) {
+        return;
+    }
+
+    // 自動保存の場合は処理しない
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    // 権限チェック
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    // データの保存
+    if (isset($_POST['is_pickup'])) {
+        update_post_meta($post_id, '_is_pickup', '1');
+    } else {
+        delete_post_meta($post_id, '_is_pickup');
+    }
+}
+add_action('save_post', 'save_pickup_meta');
