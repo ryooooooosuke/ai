@@ -1728,3 +1728,39 @@ function save_pickup_meta($post_id)
     }
 }
 add_action('save_post', 'save_pickup_meta');
+
+/**
+ * カスタムページのページネーション対応
+ */
+function custom_template_redirect()
+{
+    // URLパスを取得
+    $request_uri = $_SERVER['REQUEST_URI'];
+    $path = parse_url($request_uri, PHP_URL_PATH);
+
+    // columnページのパスを確認
+    if (strpos($path, '/ai/column') !== false) {
+        // グローバル変数を設定
+        global $wp_query;
+
+        // ページネーション変数を設定
+        if (isset($_GET['paged'])) {
+            set_query_var('paged', intval($_GET['paged']));
+        }
+
+        // テンプレートの読み込み方法を変更
+        include(STYLESHEETPATH . '/home.php');
+        exit;
+    }
+}
+add_action('template_redirect', 'custom_template_redirect', 5);
+
+/**
+ * クエリ変数を登録
+ */
+function add_custom_query_vars($vars)
+{
+    $vars[] = 'paged';
+    return $vars;
+}
+add_filter('query_vars', 'add_custom_query_vars');

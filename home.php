@@ -6,6 +6,8 @@
  */
 
 get_header();
+
+
 ?>
 
 
@@ -485,7 +487,6 @@ get_header();
     }
 
     .featured-column-image {
-        height: 250px;
         overflow: hidden;
     }
 
@@ -808,7 +809,7 @@ get_header();
 <div class="breadcrumb">
     <div class="container">
         <ul class="breadcrumb-list">
-            <li class="breadcrumb-item"><a href="#">ホーム</a></li>
+            <li class="breadcrumb-item"><a href="<?php echo home_url(); ?>">ホーム</a></li>
             <li class="breadcrumb-item active">コラム</li>
         </ul>
     </div>
@@ -831,42 +832,79 @@ get_header();
             <div class="filter-left">
                 <div>
                     <span class="filter-label">カテゴリー</span>
-                    <select class="filter-select">
-                        <option value="all">すべてのカテゴリー</option>
-                        <option value="beginner">初心者向け</option>
-                        <option value="intermediate">中級者向け</option>
-                        <option value="advanced">上級者向け</option>
-                        <option value="case-study">事例紹介</option>
-                        <option value="tool-review">ツールレビュー</option>
+                    <select class="filter-select" onchange="location.href=this.value;">
+                        <option value="<?php echo get_permalink(); ?>">すべてのカテゴリー</option>
+                        <?php
+                        $categories = get_categories(array(
+                            'orderby' => 'count',
+                            'order' => 'DESC',
+                            'hide_empty' => true
+                        ));
+
+                        $current_cat = isset($_GET['cat']) ? $_GET['cat'] : '';
+
+                        foreach ($categories as $category) {
+                            $selected = ($current_cat == $category->term_id) ? 'selected' : '';
+                            echo sprintf(
+                                '<option value="%s" %s>%s</option>',
+                                esc_url(add_query_arg('cat', $category->term_id, get_permalink())),
+                                $selected,
+                                esc_html($category->name)
+                            );
+                        }
+                        ?>
                     </select>
                 </div>
                 <div>
                     <span class="filter-label">並び替え</span>
-                    <select class="filter-select">
-                        <option value="newest">新着順</option>
-                        <option value="popular">人気順</option>
-                        <option value="view">閲覧数順</option>
+                    <select class="filter-select" onchange="location.href=this.value;">
+                        <?php
+                        $current_orderby = isset($_GET['orderby']) ? $_GET['orderby'] : 'newest';
+                        $order_options = array(
+                            'newest' => '新着順',
+                            'popular' => '人気順',
+                            'view' => '閲覧数順'
+                        );
+
+                        foreach ($order_options as $value => $label) {
+                            $selected = ($current_orderby === $value) ? 'selected' : '';
+                            $url = add_query_arg('orderby', $value, remove_query_arg('paged', get_permalink()));
+                            echo sprintf(
+                                '<option value="%s" %s>%s</option>',
+                                esc_url($url),
+                                $selected,
+                                esc_html($label)
+                            );
+                        }
+                        ?>
                     </select>
                 </div>
             </div>
             <div class="filter-right">
-                <div class="original-search-box">
-                    <input type="text" class="search-input" placeholder="キーワードで検索...">
-                    <button class="search-button">検索</button>
-                </div>
+                <form role="search" method="get" class="original-search-box" action="<?php echo get_permalink(); ?>">
+                    <input type="hidden" name="page_id" value="<?php echo get_the_ID(); ?>">
+                    <input type="text" class="search-input" placeholder="キーワードで検索..." name="s" value="<?php echo isset($_GET['s']) ? esc_attr($_GET['s']) : ''; ?>">
+                    <button type="submit" class="search-button">検索</button>
+                </form>
             </div>
         </div>
         <div class="category-pills">
-            <a href="#" class="category-pill active">すべて</a>
-            <a href="#" class="category-pill">AI活用法</a>
-            <a href="#" class="category-pill">動画クリエイター</a>
-            <a href="#" class="category-pill">ライティング</a>
-            <a href="#" class="category-pill">プログラミング</a>
-            <a href="#" class="category-pill">デザイン</a>
-            <a href="#" class="category-pill">マーケティング</a>
-            <a href="#" class="category-pill">収益化</a>
-            <a href="#" class="category-pill">効率化</a>
-            <a href="#" class="category-pill">副業立ち上げ</a>
+            <?php
+            // すべてのリンク
+            $all_class = empty($current_cat) ? 'category-pill active' : 'category-pill';
+            echo '<a href="' . get_permalink() . '" class="' . $all_class . '">すべて</a>';
+
+            // カテゴリーピル
+            foreach ($categories as $category) {
+                $active_class = ($current_cat == $category->term_id) ? 'category-pill active' : 'category-pill';
+                echo sprintf(
+                    '<a href="%s" class="%s">%s</a>',
+                    esc_url(add_query_arg('cat', $category->term_id, get_permalink())),
+                    $active_class,
+                    esc_html($category->name)
+                );
+            }
+            ?>
         </div>
     </div>
 </section>
@@ -878,286 +916,196 @@ get_header();
         <h2 class="section-title">ピックアップコラム</h2>
         <p class="section-subtitle">特におすすめの記事をピックアップしています</p>
 
-        <div class="featured-column">
-            <div class="featured-column-image">
-                <img src="/api/placeholder/600/400" alt="AIにキャリアを奪われる？未来に備える3つの戦略">
-            </div>
-            <div class="featured-column-content">
-                <span class="featured-label">特集記事</span>
-                <h3 class="featured-column-title">AIにキャリアを奪われる？未来に備える3つの戦略</h3>
-                <div class="featured-column-meta">
-                    <div class="column-date">2025年2月28日</div>
-                    <div class="column-author">
-                        <div class="column-author-avatar">S</div>
-                        佐藤 健太
+        <?php
+        // ピックアップ記事を取得
+        $pickup_args = array(
+            'post_type' => 'post',
+            'posts_per_page' => 3,
+            'meta_key' => '_is_pickup',
+            'meta_value' => '1'
+        );
+        $pickup_query = new WP_Query($pickup_args);
+
+        if ($pickup_query->have_posts()) :
+            while ($pickup_query->have_posts()) : $pickup_query->the_post();
+        ?>
+                <div class="featured-column">
+                    <div class="featured-column-image">
+                        <?php if (has_post_thumbnail()) : ?>
+                            <?php the_post_thumbnail('large'); ?>
+                        <?php else : ?>
+                            <img src="<?php echo get_template_directory_uri(); ?>/images/default.jpg" alt="<?php the_title_attribute(); ?>">
+                        <?php endif; ?>
+                    </div>
+                    <div class="featured-column-content">
+                        <span class="featured-label">
+                            <?php
+                            $categories = get_the_category();
+                            if ($categories) {
+                                echo esc_html($categories[0]->name);
+                            }
+                            ?>
+                        </span>
+                        <h3 class="featured-column-title"><?php the_title(); ?></h3>
+                        <div class="featured-column-meta">
+                            <div class="column-date"><?php echo get_the_date('Y年n月j日'); ?></div>
+                            <div class="column-author">
+                                <div class="column-author-avatar"><?php echo substr(get_the_author(), 0, 1); ?></div>
+                                <?php the_author(); ?>
+                            </div>
+                        </div>
+                        <p class="featured-column-description">
+                            <?php echo wp_trim_words(get_the_excerpt(), 100); ?>
+                        </p>
+                        <a href="<?php the_permalink(); ?>" class="read-more">続きを読む</a>
                     </div>
                 </div>
-                <p class="featured-column-description">
-                    進化し続けるAI技術は、多くの職種に影響を与えています。AIにキャリアを奪われる不安を抱えている方も多いでしょう。本記事では、AIと共存しながらキャリアを発展させるための具体的な3つの戦略を紹介します。AI時代に生き残るためのスキルとマインドセットを身につけましょう。
-                </p>
-                <a href="#" class="read-more">続きを読む</a>
+            <?php
+            endwhile;
+            wp_reset_postdata();
+        else:
+            ?>
+            <!-- ピックアップ記事が設定されていない場合の表示 -->
+            <div class="no-pickup-message">
+                現在ピックアップ記事は設定されていません。
             </div>
-        </div>
+        <?php
+        endif;
+        ?>
 
         <!-- 最新コラム -->
         <div class="columns-heading">
-            <h2 class="columns-title">最新コラム <span class="columns-count">全53件</span></h2>
+            <?php
+            // 投稿の総数を取得
+            $total_posts = wp_count_posts()->publish;
+            ?>
+            <h2 class="columns-title">最新コラム <span class="columns-count">全<?php echo $total_posts; ?>件</span></h2>
         </div>
 
         <div class="columns-grid">
-            <!-- コラムカード 1 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">AI活用法</div>
-                    <img src="/api/placeholder/400/300" alt="AIライティングツールで副業収入を倍増させる方法">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年2月15日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">T</div>
-                            田中 一郎
-                        </div>
-                    </div>
-                    <h3 class="column-title">AIライティングツールで副業収入を倍増させる方法</h3>
-                    <p class="column-description">AIライティングツールを活用して記事制作の効率を上げ、月5万円の副収入を目指す方法を解説します。ツールの選び方から具体的な運用方法まで、初心者でも実践できるノウハウを紹介。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">初心者向け</span>
-                        <span class="column-tag">ライティング</span>
-                        <span class="column-tag">収益化</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
+            <?php
+            // ページネーションのための設定
+            $paged = get_query_var('paged') ? get_query_var('paged') : 1;
+            if (empty($paged) && isset($_GET['paged'])) {
+                $paged = intval($_GET['paged']);
+            }
 
-            <!-- コラムカード 2 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">プログラミング</div>
-                    <img src="/api/placeholder/400/300" alt="AIプログラミングアシスタントでコーディング時間を半減する技術">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年2月10日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">Y</div>
-                            山田 太郎
-                        </div>
-                    </div>
-                    <h3 class="column-title">AIプログラミングアシスタントでコーディング時間を半減する技術</h3>
-                    <p class="column-description">最新のAIプログラミングアシスタントを使いこなして、開発作業を効率化し単価アップする方法を紹介します。プロンプトの書き方や効果的な活用シーンなど、実践的なテクニックを解説。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">中級者向け</span>
-                        <span class="column-tag">効率化</span>
-                        <span class="column-tag">スキルアップ</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
+            $args = array(
+                'post_type' => 'post',
+                'posts_per_page' => 18, // 1ページあたりの表示数を増やす（テスト用）
+                'paged' => $paged,
+                'orderby' => 'date',
+                'order' => 'DESC'
+            );
 
-            <!-- コラムカード 3 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">マーケティング</div>
-                    <img src="/api/placeholder/400/300" alt="AIを活用したSNSマーケティングで顧客獲得率を3倍にした事例">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年2月5日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">K</div>
-                            木村 真理
-                        </div>
-                    </div>
-                    <h3 class="column-title">AIを活用したSNSマーケティングで顧客獲得率を3倍にした事例</h3>
-                    <p class="column-description">AIツールを活用してSNSマーケティングを自動化・最適化し、顧客獲得率を大幅に向上させた実践事例を解説します。具体的な戦略とツールの組み合わせ方など、応用可能なノウハウを紹介。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">上級者向け</span>
-                        <span class="column-tag">事例紹介</span>
-                        <span class="column-tag">マーケティング</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
+            // カテゴリーフィルターが適用されている場合
+            if (isset($_GET['cat']) && !empty($_GET['cat'])) {
+                $args['cat'] = intval($_GET['cat']);
+            }
 
-            <!-- コラムカード 4 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">動画クリエイター</div>
-                    <img src="/api/placeholder/400/300" alt="AI動画編集ツールで月100万円稼ぐYouTuberの制作フロー公開">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年1月28日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">N</div>
-                            中村 健
-                        </div>
-                    </div>
-                    <h3 class="column-title">AI動画編集ツールで月100万円稼ぐYouTuberの制作フロー公開</h3>
-                    <p class="column-description">登録者10万人のYouTuberが実際に使っているAI動画編集ツールと制作フローを大公開。企画から撮影、編集、公開までの効率化のコツと収益化のポイントを詳しく解説します。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">事例紹介</span>
-                        <span class="column-tag">動画編集</span>
-                        <span class="column-tag">収益化</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
+            // 検索クエリが適用されている場合
+            if (isset($_GET['s']) && !empty($_GET['s'])) {
+                $args['s'] = sanitize_text_field($_GET['s']);
+            }
 
-            <!-- コラムカード 5 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">デザイン</div>
-                    <img src="/api/placeholder/400/300" alt="AIデザインツールを使ったロゴ制作で副業を始める方法">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年1月20日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">M</div>
-                            松本 さくら
-                        </div>
-                    </div>
-                    <h3 class="column-title">AIデザインツールを使ったロゴ制作で副業を始める方法</h3>
-                    <p class="column-description">デザインスキルがなくてもAIツールを活用して高品質なロゴを制作し、副業として収益化する方法を紹介。クライアント獲得のコツや価格設定など、0からビジネスを立ち上げるノウハウを解説。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">初心者向け</span>
-                        <span class="column-tag">副業立ち上げ</span>
-                        <span class="column-tag">デザイン</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
+            $the_query = new WP_Query($args);
 
-            <!-- コラムカード 6 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">ツールレビュー</div>
-                    <img src="/api/placeholder/400/300" alt="2025年版：副業に役立つAIツール10選を徹底比較">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年1月15日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">S</div>
-                            鈴木 健太
+            if ($the_query->have_posts()) :
+                while ($the_query->have_posts()) : $the_query->the_post();
+            ?>
+                    <div class="column-card">
+                        <div class="column-image">
+                            <div class="column-category">
+                                <?php
+                                $categories = get_the_category();
+                                if ($categories) {
+                                    echo esc_html($categories[0]->name);
+                                }
+                                ?>
+                            </div>
+                            <?php if (has_post_thumbnail()) : ?>
+                                <?php the_post_thumbnail('medium_large'); ?>
+                            <?php else : ?>
+                                <img src="<?php echo get_template_directory_uri(); ?>/images/default.jpg" alt="<?php the_title_attribute(); ?>">
+                            <?php endif; ?>
+                        </div>
+                        <div class="column-content">
+                            <div class="column-meta">
+                                <div class="column-date"><?php echo get_the_date('Y年n月j日'); ?></div>
+                                <div class="column-author">
+                                    <div class="column-author-avatar"><?php echo substr(get_the_author(), 0, 1); ?></div>
+                                    <?php the_author(); ?>
+                                </div>
+                            </div>
+                            <h3 class="column-title"><?php the_title(); ?></h3>
+                            <p class="column-description"><?php echo wp_trim_words(get_the_excerpt(), 60); ?></p>
+                            <div class="column-tags">
+                                <?php
+                                $tags = get_the_tags();
+                                if ($tags) :
+                                    foreach ($tags as $tag) :
+                                ?>
+                                        <span class="column-tag"><?php echo esc_html($tag->name); ?></span>
+                                <?php
+                                    endforeach;
+                                endif;
+                                ?>
+                            </div>
+                            <a href="<?php the_permalink(); ?>" class="read-more">続きを読む</a>
                         </div>
                     </div>
-                    <h3 class="column-title">2025年版：副業に役立つAIツール10選を徹底比較</h3>
-                    <p class="column-description">副業を効率化・高品質化できる最新AIツールを10個厳選して比較レビュー。それぞれの特徴や料金、使い勝手など実際に使用してわかったメリット・デメリットを包み隠さず紹介します。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">ツールレビュー</span>
-                        <span class="column-tag">比較</span>
-                        <span class="column-tag">2025年最新</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
-
-            <!-- コラムカード 7 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">初心者向け</div>
-                    <img src="/api/placeholder/400/300" alt="AI副業を始める前に知っておくべき5つのこと">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年1月10日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">H</div>
-                            林 優子
-                        </div>
-                    </div>
-                    <h3 class="column-title">AI副業を始める前に知っておくべき5つのこと</h3>
-                    <p class="column-description">AI技術を活用した副業を始める前に理解しておくべき重要なポイントを解説。失敗しないための心構えや準備、知識などをAI副業歴3年の筆者が経験を元に詳しく紹介します。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">初心者向け</span>
-                        <span class="column-tag">副業入門</span>
-                        <span class="column-tag">基礎知識</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
-
-            <!-- コラムカード 8 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">ライティング</div>
-                    <img src="/api/placeholder/400/300" alt="AIと人間のコラボレーション：高品質な記事制作の新しいワークフロー">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2025年1月5日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">A</div>
-                            相田 真紀
-                        </div>
-                    </div>
-                    <h3 class="column-title">AIと人間のコラボレーション：高品質な記事制作の新しいワークフロー</h3>
-                    <p class="column-description">AIツールに頼りすぎず、かといって使わないのももったいない。AIと人間の強みを活かした最適なライティングワークフローを紹介。SEOにも強い質の高い記事を効率的に生産する方法を解説します。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">中級者向け</span>
-                        <span class="column-tag">ライティング</span>
-                        <span class="column-tag">ワークフロー</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
-
-            <!-- コラムカード 9 -->
-            <div class="column-card">
-                <div class="column-image">
-                    <div class="column-category">収益化</div>
-                    <img src="/api/placeholder/400/300" alt="AIを活用した複数の収入源を構築する実践ガイド">
-                </div>
-                <div class="column-content">
-                    <div class="column-meta">
-                        <div class="column-date">2024年12月28日</div>
-                        <div class="column-author">
-                            <div class="column-author-avatar">K</div>
-                            小林 隆
-                        </div>
-                    </div>
-                    <h3 class="column-title">AIを活用した複数の収入源を構築する実践ガイド</h3>
-                    <p class="column-description">一つの副業だけでなく、AIを活用して複数の収入源を効率的に構築・運用する方法を解説。リスク分散と収益最大化のための具体的な戦略と実践例を紹介します。</p>
-                    <div class="column-tags">
-                        <span class="column-tag">上級者向け</span>
-                        <span class="column-tag">収益多角化</span>
-                        <span class="column-tag">戦略</span>
-                    </div>
-                    <a href="#" class="read-more">続きを読む</a>
-                </div>
-            </div>
+            <?php
+                endwhile;
+            else:
+                echo '<div class="no-posts-found">記事が見つかりませんでした。</div>';
+            endif;
+            ?>
         </div>
 
         <!-- ページネーション -->
-        <div class="pagination">
-            <div class="page-item disabled">
-                <a href="#" class="page-link page-prev">前へ</a>
+        <?php if ($the_query->max_num_pages > 1) : ?>
+            <div class="pagination">
+                <?php
+                // 現在のページ番号
+                $current_page = max(1, $paged);
+                $total_pages = $the_query->max_num_pages;
+
+                // 固定のベースURLを設定（重要）
+                $base_url = 'http://localhost:8888/ai/column/';
+
+                // 前へボタン
+                if ($current_page > 1) {
+                    echo '<div class="page-item">';
+                    echo '<a href="' . esc_url(add_query_arg('paged', $current_page - 1, $base_url)) . '" class="page-link page-prev">前へ</a>';
+                    echo '</div>';
+                } else {
+                    echo '<div class="page-item disabled"><span class="page-link page-prev">前へ</span></div>';
+                }
+
+                // ページ番号
+                for ($i = 1; $i <= $total_pages; $i++) {
+                    if ($i == $current_page) {
+                        echo '<div class="page-item active"><span class="page-link">' . $i . '</span></div>';
+                    } else {
+                        echo '<div class="page-item">';
+                        echo '<a href="' . esc_url(add_query_arg('paged', $i, $base_url)) . '" class="page-link">' . $i . '</a>';
+                        echo '</div>';
+                    }
+                }
+
+                // 次へボタン
+                if ($current_page < $total_pages) {
+                    echo '<div class="page-item">';
+                    echo '<a href="' . esc_url(add_query_arg('paged', $current_page + 1, $base_url)) . '" class="page-link page-next">次へ</a>';
+                    echo '</div>';
+                } else {
+                    echo '<div class="page-item disabled"><span class="page-link page-next">次へ</span></div>';
+                }
+                ?>
             </div>
-            <div class="page-item active">
-                <a href="#" class="page-link">1</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">2</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">3</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">4</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">5</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">6</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link page-next">次へ</a>
-            </div>
-        </div>
+        <?php endif; ?>
+
+        <?php wp_reset_postdata(); ?>
     </div>
 </section>
 
