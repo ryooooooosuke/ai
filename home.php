@@ -977,6 +977,51 @@ get_header();
         );
         $pickup_query = new WP_Query($pickup_args);
 
+        // ページネーションのための設定
+        $paged = get_query_var('paged') ? get_query_var('paged') : 1;
+        if (empty($paged) && isset($_GET['paged'])) {
+            $paged = intval($_GET['paged']);
+        }
+
+        $args = array(
+            'post_type' => 'post',
+            'posts_per_page' => 6, // 1ページあたりの表示数
+            'paged' => $paged,
+            'orderby' => 'date',
+            'order' => 'DESC'
+        );
+
+        // カテゴリーフィルターが適用されている場合
+        if (isset($_GET['cat']) && !empty($_GET['cat'])) {
+            $args['cat'] = intval($_GET['cat']);
+        }
+
+        // 検索クエリが適用されている場合
+        if (isset($_GET['s']) && !empty($_GET['s'])) {
+            $args['s'] = sanitize_text_field($_GET['s']);
+        }
+
+        // 並び替えが適用されている場合
+        if (isset($_GET['orderby'])) {
+            switch ($_GET['orderby']) {
+                case 'popular':
+                    $args['meta_key'] = 'post_views_count'; // 人気順（閲覧数のカスタムフィールドを使用）
+                    $args['orderby'] = 'meta_value_num';
+                    $args['order'] = 'DESC';
+                    break;
+                case 'oldest':
+                    $args['orderby'] = 'date';
+                    $args['order'] = 'ASC';
+                    break;
+                    // デフォルトは新着順（date DESC）
+            }
+        }
+
+        $the_query = new WP_Query($args);
+
+        // 現在の条件での総投稿数を取得
+        $total_posts = $the_query->found_posts;
+
         if ($pickup_query->have_posts()) :
             while ($pickup_query->have_posts()) : $pickup_query->the_post();
         ?>
@@ -1026,57 +1071,23 @@ get_header();
 
         <!-- 最新コラム -->
         <div class="columns-heading">
-            <?php
-            // 投稿の総数を取得
-            $total_posts = wp_count_posts()->publish;
-            ?>
-            <h2 class="columns-title">最新コラム <span class="columns-count">全<?php echo $total_posts; ?>件</span></h2>
+            <h2 class="columns-title">
+                <?php if (isset($_GET['cat']) && !empty($_GET['cat'])) : ?>
+                    <?php
+                    $current_cat_obj = get_category(intval($_GET['cat']));
+                    if ($current_cat_obj) {
+                        echo esc_html($current_cat_obj->name) . ' ';
+                    }
+                    ?>
+                <?php else : ?>
+                    最新コラム
+                <?php endif; ?>
+                <span class="columns-count">全<?php echo $total_posts; ?>件</span>
+            </h2>
         </div>
 
         <div class="columns-grid">
             <?php
-            // ページネーションのための設定
-            $paged = get_query_var('paged') ? get_query_var('paged') : 1;
-            if (empty($paged) && isset($_GET['paged'])) {
-                $paged = intval($_GET['paged']);
-            }
-
-            $args = array(
-                'post_type' => 'post',
-                'posts_per_page' => 1, // 1ページあたりの表示数
-                'paged' => $paged,
-                'orderby' => 'date',
-                'order' => 'DESC'
-            );
-
-            // カテゴリーフィルターが適用されている場合
-            if (isset($_GET['cat']) && !empty($_GET['cat'])) {
-                $args['cat'] = intval($_GET['cat']);
-            }
-
-            // 検索クエリが適用されている場合
-            if (isset($_GET['s']) && !empty($_GET['s'])) {
-                $args['s'] = sanitize_text_field($_GET['s']);
-            }
-
-            // 並び替えが適用されている場合
-            if (isset($_GET['orderby'])) {
-                switch ($_GET['orderby']) {
-                    case 'popular':
-                        $args['meta_key'] = 'post_views_count'; // 人気順（閲覧数のカスタムフィールドを使用）
-                        $args['orderby'] = 'meta_value_num';
-                        $args['order'] = 'DESC';
-                        break;
-                    case 'oldest':
-                        $args['orderby'] = 'date';
-                        $args['order'] = 'ASC';
-                        break;
-                        // デフォルトは新着順（date DESC）
-                }
-            }
-
-            $the_query = new WP_Query($args);
-
             if ($the_query->have_posts()) :
                 while ($the_query->have_posts()) : $the_query->the_post();
             ?>
