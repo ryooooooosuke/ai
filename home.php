@@ -833,23 +833,51 @@ get_header();
                 <div>
                     <span class="filter-label">カテゴリー</span>
                     <select class="filter-select" onchange="location.href=this.value;">
-                        <option value="<?php echo get_permalink(); ?>">すべてのカテゴリー</option>
                         <?php
+                        // 現在のURLを取得
+                        $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+                        $base_url = strtok($current_url, '?'); // クエリパラメータを除去
+
+                        // 現在のクエリパラメータを保持（catパラメータは除く）
+                        $query_args = array();
+                        foreach ($_GET as $key => $value) {
+                            if ($key !== 'cat' && $key !== 'paged') {
+                                $query_args[$key] = $value;
+                            }
+                        }
+
+                        // 「すべてのカテゴリー」のURL
+                        $all_cats_url = add_query_arg($query_args, $base_url);
+
+                        // 現在選択されているカテゴリー
+                        $current_cat = isset($_GET['cat']) ? intval($_GET['cat']) : 0;
+
+                        // 「すべてのカテゴリー」オプション
+                        $selected = ($current_cat === 0) ? 'selected' : '';
+                        echo sprintf(
+                            '<option value="%s" %s>すべてのカテゴリー</option>',
+                            esc_url($all_cats_url),
+                            $selected
+                        );
+
+                        // カテゴリー一覧を取得
                         $categories = get_categories(array(
                             'orderby' => 'count',
                             'order' => 'DESC',
                             'hide_empty' => true
                         ));
 
-                        $current_cat = isset($_GET['cat']) ? $_GET['cat'] : '';
-
+                        // 各カテゴリーのオプションを生成
                         foreach ($categories as $category) {
+                            $cat_args = array_merge($query_args, array('cat' => $category->term_id));
                             $selected = ($current_cat == $category->term_id) ? 'selected' : '';
+
                             echo sprintf(
-                                '<option value="%s" %s>%s</option>',
-                                esc_url(add_query_arg('cat', $category->term_id, get_permalink())),
+                                '<option value="%s" %s>%s (%s)</option>',
+                                esc_url(add_query_arg($cat_args, $base_url)),
                                 $selected,
-                                esc_html($category->name)
+                                esc_html($category->name),
+                                $category->count
                             );
                         }
                         ?>
@@ -890,16 +918,39 @@ get_header();
         </div>
         <div class="category-pills">
             <?php
+            // 現在のURLからベースURLを動的に取得
+            $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            $base_url = strtok($current_url, '?'); // クエリパラメータを除去
+
+            // 現在のクエリパラメータを保持（catパラメータは除く）
+            $query_args = array();
+            foreach ($_GET as $key => $value) {
+                if ($key !== 'cat' && $key !== 'paged') {
+                    $query_args[$key] = $value;
+                }
+            }
+
+            // 現在選択されているカテゴリー
+            $current_cat = isset($_GET['cat']) ? intval($_GET['cat']) : 0;
+
             // すべてのリンク
             $all_class = empty($current_cat) ? 'category-pill active' : 'category-pill';
-            echo '<a href="' . get_permalink() . '" class="' . $all_class . '">すべて</a>';
+            echo '<a href="' . esc_url(add_query_arg($query_args, $base_url)) . '" class="' . $all_class . '">すべて</a>';
 
             // カテゴリーピル
+            $categories = get_categories(array(
+                'orderby' => 'count',
+                'order' => 'DESC',
+                'hide_empty' => true
+            ));
+
             foreach ($categories as $category) {
                 $active_class = ($current_cat == $category->term_id) ? 'category-pill active' : 'category-pill';
+                $cat_args = array_merge($query_args, array('cat' => $category->term_id));
+
                 echo sprintf(
                     '<a href="%s" class="%s">%s</a>',
-                    esc_url(add_query_arg('cat', $category->term_id, get_permalink())),
+                    esc_url(add_query_arg($cat_args, $base_url)),
                     $active_class,
                     esc_html($category->name)
                 );
@@ -992,7 +1043,7 @@ get_header();
 
             $args = array(
                 'post_type' => 'post',
-                'posts_per_page' => 1, // 1ページあたりの表示数を増やす（テスト用）
+                'posts_per_page' => 1, // 1ページあたりの表示数
                 'paged' => $paged,
                 'orderby' => 'date',
                 'order' => 'DESC'
@@ -1006,6 +1057,22 @@ get_header();
             // 検索クエリが適用されている場合
             if (isset($_GET['s']) && !empty($_GET['s'])) {
                 $args['s'] = sanitize_text_field($_GET['s']);
+            }
+
+            // 並び替えが適用されている場合
+            if (isset($_GET['orderby'])) {
+                switch ($_GET['orderby']) {
+                    case 'popular':
+                        $args['meta_key'] = 'post_views_count'; // 人気順（閲覧数のカスタムフィールドを使用）
+                        $args['orderby'] = 'meta_value_num';
+                        $args['order'] = 'DESC';
+                        break;
+                    case 'oldest':
+                        $args['orderby'] = 'date';
+                        $args['order'] = 'ASC';
+                        break;
+                        // デフォルトは新着順（date DESC）
+                }
             }
 
             $the_query = new WP_Query($args);
@@ -1070,13 +1137,33 @@ get_header();
                 $current_page = max(1, $paged);
                 $total_pages = $the_query->max_num_pages;
 
-                // 固定のベースURLを設定（重要）
-                $base_url = 'http://localhost:8888/ai/column/';
+                // 現在のURLからベースURLを動的に取得
+                $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+                $base_url = strtok($current_url, '?'); // クエリパラメータを除去
+
+                // 現在のクエリパラメータを保持
+                $query_args = array();
+
+                // カテゴリーフィルターが適用されている場合
+                if (isset($_GET['cat']) && !empty($_GET['cat'])) {
+                    $query_args['cat'] = intval($_GET['cat']);
+                }
+
+                // 検索クエリが適用されている場合
+                if (isset($_GET['s']) && !empty($_GET['s'])) {
+                    $query_args['s'] = sanitize_text_field($_GET['s']);
+                }
+
+                // 並び替えが適用されている場合
+                if (isset($_GET['orderby']) && !empty($_GET['orderby'])) {
+                    $query_args['orderby'] = sanitize_text_field($_GET['orderby']);
+                }
 
                 // 前へボタン
                 if ($current_page > 1) {
                     echo '<div class="page-item">';
-                    echo '<a href="' . esc_url(add_query_arg('paged', $current_page - 1, $base_url)) . '" class="page-link page-prev">前へ</a>';
+                    $prev_args = array_merge($query_args, array('paged' => $current_page - 1));
+                    echo '<a href="' . esc_url(add_query_arg($prev_args, $base_url)) . '" class="page-link page-prev">前へ</a>';
                     echo '</div>';
                 } else {
                     echo '<div class="page-item disabled"><span class="page-link page-prev">前へ</span></div>';
@@ -1088,7 +1175,8 @@ get_header();
                         echo '<div class="page-item active"><span class="page-link">' . $i . '</span></div>';
                     } else {
                         echo '<div class="page-item">';
-                        echo '<a href="' . esc_url(add_query_arg('paged', $i, $base_url)) . '" class="page-link">' . $i . '</a>';
+                        $page_args = array_merge($query_args, array('paged' => $i));
+                        echo '<a href="' . esc_url(add_query_arg($page_args, $base_url)) . '" class="page-link">' . $i . '</a>';
                         echo '</div>';
                     }
                 }
@@ -1096,7 +1184,8 @@ get_header();
                 // 次へボタン
                 if ($current_page < $total_pages) {
                     echo '<div class="page-item">';
-                    echo '<a href="' . esc_url(add_query_arg('paged', $current_page + 1, $base_url)) . '" class="page-link page-next">次へ</a>';
+                    $next_args = array_merge($query_args, array('paged' => $current_page + 1));
+                    echo '<a href="' . esc_url(add_query_arg($next_args, $base_url)) . '" class="page-link page-next">次へ</a>';
                     echo '</div>';
                 } else {
                     echo '<div class="page-item disabled"><span class="page-link page-next">次へ</span></div>';
@@ -1104,7 +1193,6 @@ get_header();
                 ?>
             </div>
         <?php endif; ?>
-
         <?php wp_reset_postdata(); ?>
     </div>
 </section>
