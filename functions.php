@@ -1738,8 +1738,20 @@ function custom_template_redirect()
     $request_uri = $_SERVER['REQUEST_URI'];
     $path = parse_url($request_uri, PHP_URL_PATH);
 
-    // columnページのパスを確認
+    // 環境に応じたパスチェック
+    $is_column_page = false;
+
+    // テスト環境（/ai/column/）
     if (strpos($path, '/ai/column') !== false) {
+        $is_column_page = true;
+    }
+
+    // 本番環境（/column/）
+    if (strpos($path, '/column') !== false) {
+        $is_column_page = true;
+    }
+
+    if ($is_column_page) {
         // グローバル変数を設定
         global $wp_query;
 
@@ -1754,7 +1766,6 @@ function custom_template_redirect()
     }
 }
 add_action('template_redirect', 'custom_template_redirect', 5);
-
 /**
  * クエリ変数を登録
  */

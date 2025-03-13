@@ -992,7 +992,7 @@ get_header();
 
             $args = array(
                 'post_type' => 'post',
-                'posts_per_page' => 18, // 1ページあたりの表示数を増やす（テスト用）
+                'posts_per_page' => 1, // 1ページあたりの表示数を増やす（テスト用）
                 'paged' => $paged,
                 'orderby' => 'date',
                 'order' => 'DESC'
