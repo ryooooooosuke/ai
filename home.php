@@ -887,19 +887,32 @@ get_header();
                     <span class="filter-label">並び替え</span>
                     <select class="filter-select" onchange="location.href=this.value;">
                         <?php
+                        // 現在のURLからベースURLを動的に取得
+                        $current_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+                        $base_url = strtok($current_url, '?'); // クエリパラメータを除去
+
+                        // 現在のクエリパラメータを保持（orderbyパラメータは除く）
+                        $query_args = array();
+                        foreach ($_GET as $key => $value) {
+                            if ($key !== 'orderby' && $key !== 'paged') {
+                                $query_args[$key] = $value;
+                            }
+                        }
+
                         $current_orderby = isset($_GET['orderby']) ? $_GET['orderby'] : 'newest';
                         $order_options = array(
                             'newest' => '新着順',
-                            'popular' => '人気順',
-                            'view' => '閲覧数順'
+                            // 'popular' => '人気順',
+                            'oldest' => '古い順'
                         );
 
                         foreach ($order_options as $value => $label) {
-                            $selected = ($current_orderby === $value) ? 'selected' : '';
-                            $url = add_query_arg('orderby', $value, remove_query_arg('paged', get_permalink()));
+                            $selected = ($current_orderby == $value) ? 'selected' : '';
+                            $order_args = array_merge($query_args, array('orderby' => $value));
+
                             echo sprintf(
                                 '<option value="%s" %s>%s</option>',
-                                esc_url($url),
+                                esc_url(add_query_arg($order_args, $base_url)),
                                 $selected,
                                 esc_html($label)
                             );
@@ -909,9 +922,23 @@ get_header();
                 </div>
             </div>
             <div class="filter-right">
-                <form role="search" method="get" class="original-search-box" action="<?php echo get_permalink(); ?>">
-                    <input type="hidden" name="page_id" value="<?php echo get_the_ID(); ?>">
+                <form role="search" method="get" class="original-search-box" action="<?php echo esc_url(strtok($_SERVER['REQUEST_URI'], '?')); ?>">
                     <input type="text" class="search-input" placeholder="キーワードで検索..." name="s" value="<?php echo isset($_GET['s']) ? esc_attr($_GET['s']) : ''; ?>">
+                    <input type="hidden" name="search_in" value="title">
+                    <?php
+                    // 現在のカテゴリーパラメータがある場合は保持
+                    if (isset($_GET['cat']) && !empty($_GET['cat'])) :
+                    ?>
+                        <input type="hidden" name="cat" value="<?php echo intval($_GET['cat']); ?>">
+                    <?php endif; ?>
+
+                    <?php
+                    // 現在の並び替えパラメータがある場合は保持
+                    if (isset($_GET['orderby']) && !empty($_GET['orderby'])) :
+                    ?>
+                        <input type="hidden" name="orderby" value="<?php echo esc_attr($_GET['orderby']); ?>">
+                    <?php endif; ?>
+
                     <button type="submit" class="search-button">検索</button>
                 </form>
             </div>
