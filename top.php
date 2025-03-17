@@ -386,78 +386,65 @@ get_header();
         <h2 class="section-title">新着コラム</h2>
         <p class="section-subtitle">副業とAIに関する最新の情報やノウハウを専門家が解説します</p>
         <div class="tools-grid">
-            <!-- コラムカード 1 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="コラム画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">初心者向け</span>
-                        <span class="tool-tag">AIツール活用法</span>
-                    </div>
-                    <h3 class="tool-title">AIライティングツールで副業収入を倍増させる方法</h3>
-                    <p class="tool-description">AIライティングツールを活用して記事制作の効率を上げ、月5万円の副収入を目指す方法を解説します。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span>2025年2月15日</span>
-                        </div>
-                        <div class="tool-price">
-                            <a href="#">続きを読む</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?php
+            // 最新の投稿3件を取得
+            $args = array(
+                'post_type' => 'post',
+                'posts_per_page' => 3,
+                'orderby' => 'date',
+                'order' => 'DESC'
+            );
+            $latest_posts = new WP_Query($args);
 
-            <!-- コラムカード 2 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="コラム画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">中級者向け</span>
-                        <span class="tool-tag">効率化</span>
-                    </div>
-                    <h3 class="tool-title">AIプログラミングアシスタントでコーディング時間を半減する技術</h3>
-                    <p class="tool-description">最新のAIプログラミングアシスタントを使いこなして、開発作業を効率化し単価アップする方法を紹介します。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span>2025年2月10日</span>
+            if ($latest_posts->have_posts()) :
+                while ($latest_posts->have_posts()) : $latest_posts->the_post();
+            ?>
+                    <!-- コラムカード -->
+                    <div class="tool-card">
+                        <div class="tool-image">
+                            <?php if (has_post_thumbnail()) : ?>
+                                <?php the_post_thumbnail('medium_large'); ?>
+                            <?php else : ?>
+                                <img src="/api/placeholder/400/160" alt="コラム画像">
+                            <?php endif; ?>
                         </div>
-                        <div class="tool-price">
-                            <a href="#">続きを読む</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- コラムカード 3 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="コラム画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">上級者向け</span>
-                        <span class="tool-tag">マーケティング</span>
-                    </div>
-                    <h3 class="tool-title">AIを活用したSNSマーケティングで顧客獲得率を3倍にした事例</h3>
-                    <p class="tool-description">AIツールを活用してSNSマーケティングを自動化・最適化し、顧客獲得率を大幅に向上させた実践事例を解説します。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span>2025年2月5日</span>
-                        </div>
-                        <div class="tool-price">
-                            <a href="#">続きを読む</a>
+                        <div class="tool-content">
+                            <div class="tool-tags">
+                                <?php
+                                $categories = get_the_category();
+                                if ($categories) :
+                                    foreach ($categories as $category) :
+                                ?>
+                                        <span class="tool-tag"><?php echo esc_html($category->name); ?></span>
+                                <?php
+                                    endforeach;
+                                endif;
+                                ?>
+                            </div>
+                            <h3 class="tool-title"><?php the_title(); ?></h3>
+                            <p class="tool-description"><?php echo wp_trim_words(get_the_excerpt(), 60); ?></p>
+                            <div class="tool-meta">
+                                <div class="tool-rating">
+                                    <span><?php echo get_the_date('Y年n月j日'); ?></span>
+                                </div>
+                                <div class="tool-price">
+                                    <a href="<?php the_permalink(); ?>">続きを読む</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                <?php
+                endwhile;
+                wp_reset_postdata();
+            else :
+                ?>
+                <!-- 投稿がない場合 -->
+                <p>現在コラムはありません。</p>
+            <?php endif; ?>
         </div>
 
         <div style="text-align: center; margin-top: 40px;">
-            <a href="#" class="btn">もっと見る</a>
+            <a href="<?php echo home_url('/column/'); ?>" class="btn">もっと見る</a>
         </div>
     </div>
 </section>
