@@ -196,17 +196,22 @@ get_header();
         <p class="section-subtitle">副業に役立つ厳選された生成AIツールを紹介。作業効率を高め、クオリティを向上させよう</p>
 
         <div class="tools-header">
-            <h3 class="tools-title">全300件の生成AIツール</h3>
+            <h3 class="tools-title">全<?php echo wp_count_posts('ai_tool')->publish; ?>件の生成AIツール</h3>
             <div class="tools-filter">
                 <span class="tools-filter-label">表示:</span>
-                <select class="tools-filter-select">
+                <select class="tools-filter-select" id="category-filter">
                     <option value="all">すべてのカテゴリ</option>
-                    <option value="video">動画クリエイター</option>
-                    <option value="programming">プログラミング</option>
-                    <option value="writing">ライティング</option>
-                    <option value="design">デザイン</option>
+                    <?php
+                    $categories = get_terms(array(
+                        'taxonomy' => 'ai_category',
+                        'hide_empty' => false,
+                    ));
+                    foreach ($categories as $category) {
+                        echo '<option value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '</option>';
+                    }
+                    ?>
                 </select>
-                <select class="tools-filter-select">
+                <select class="tools-filter-select" id="sort-filter">
                     <option value="popular">人気順</option>
                     <option value="newest">新着順</option>
                     <option value="rating">評価順</option>
@@ -215,167 +220,178 @@ get_header();
         </div>
 
         <div class="top-search-box">
-            <input type="text" class="search-input" placeholder="キーワードでAIツールを検索...">
-            <button class="search-button">検索</button>
+            <input type="text" class="search-input" placeholder="キーワードでAIツールを検索..." id="ai-tool-search">
+            <button class="search-button" id="ai-tool-search-button">検索</button>
         </div>
 
         <div class="tools-grid">
-            <!-- ツールカード 1 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="AIツール画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">ライティング</span>
-                        <span class="tool-tag">SEO</span>
-                    </div>
-                    <h3 class="tool-title">ContentGenius AI</h3>
-                    <p class="tool-description">SEO対応のブログ記事やWebコンテンツを自動生成。キーワード最適化機能付きで検索上位表示を実現します。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-value">4.9</span>
-                        </div>
-                        <div class="tool-price paid">¥2,980/月〜</div>
-                    </div>
-                </div>
-            </div>
+            <?php
+            // AIツールを取得
+            $args = array(
+                'post_type' => 'ai_tool',
+                'posts_per_page' => 6,
+                'orderby' => 'date',
+                'order' => 'DESC'
+            );
+            $ai_tools = new WP_Query($args);
 
-            <!-- ツールカード 2 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="AIツール画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">動画編集</span>
-                        <span class="tool-tag">字幕生成</span>
-                    </div>
-                    <h3 class="tool-title">VideoWizard AI</h3>
-                    <p class="tool-description">動画の自動編集、字幕生成、背景除去など多機能な動画編集支援ツール。作業時間を最大70%削減。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-value">4.7</span>
+            if ($ai_tools->have_posts()) :
+                while ($ai_tools->have_posts()) : $ai_tools->the_post();
+                    // カテゴリーを取得
+                    $categories = get_the_terms(get_the_ID(), 'ai_category');
+                    // 評価を取得
+                    $rating = get_post_meta(get_the_ID(), '_tool_rating', true);
+                    if (!$rating) {
+                        $rating = 0;
+                    }
+                    // 料金プランを取得
+                    $pricing_plans = get_post_meta(get_the_ID(), '_pricing_plans', true);
+                    $has_free_plan = false;
+                    if ($pricing_plans && is_array($pricing_plans)) {
+                        foreach ($pricing_plans as $tab) {
+                            if (isset($tab['details']) && is_array($tab['details'])) {
+                                foreach ($tab['details'] as $plan) {
+                                    if (isset($plan['price']) && ($plan['price'] == '0' || $plan['price'] == '無料')) {
+                                        $has_free_plan = true;
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // ギャラリー画像を取得
+                    $gallery_images = get_post_meta(get_the_ID(), '_gallery_images', true);
+                    $thumbnail_url = '';
+                    if ($gallery_images && isset($gallery_images[0])) {
+                        $thumbnail_url = wp_get_attachment_image_url($gallery_images[0], 'medium');
+                    } elseif (has_post_thumbnail()) {
+                        $thumbnail_url = get_the_post_thumbnail_url(get_the_ID(), 'medium');
+                    }
+            ?>
+                    <!-- ツールカード -->
+                    <div class="tool-card">
+                        <div class="tool-image">
+                            <?php if ($thumbnail_url) : ?>
+                                <img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
+                            <?php else : ?>
+                                <img src="<?php echo get_theme_file_uri('assets/images/common/no-image.png'); ?>" alt="画像なし">
+                            <?php endif; ?>
                         </div>
-                        <div class="tool-price paid">¥3,500/月〜</div>
-                    </div>
-                </div>
-            </div>
+                        <div class="tool-content">
+                            <div class="tool-tags">
+                                <?php if ($categories) : ?>
+                                    <?php foreach ($categories as $category) : ?>
+                                        <span class="tool-tag"><?php echo esc_html($category->name); ?></span>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            <h3 class="tool-title"><?php the_title(); ?></h3>
+                            <p class="tool-description"><?php echo wp_trim_words(get_the_excerpt(), 40); ?></p>
+                            <div class="tool-meta">
+                                <div class="tool-rating">
+                                    <span class="stars">
+                                        <?php
+                                        $stars = '';
+                                        $full_stars = floor($rating);
+                                        $half_star = ($rating - $full_stars) >= 0.5;
+                                        $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
 
-            <!-- ツールカード 3 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="AIツール画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">プログラミング</span>
-                        <span class="tool-tag">コード生成</span>
-                    </div>
-                    <h3 class="tool-title">CodeCompanion AI</h3>
-                    <p class="tool-description">コード生成、バグ修正、最適化をサポート。自然言語での指示からコードを生成し、開発効率を向上。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-value">4.8</span>
+                                        for ($i = 0; $i < $full_stars; $i++) {
+                                            $stars .= '★';
+                                        }
+                                        if ($half_star) {
+                                            $stars .= '☆';
+                                        }
+                                        for ($i = 0; $i < $empty_stars; $i++) {
+                                            $stars .= '☆';
+                                        }
+                                        echo $stars;
+                                        ?>
+                                    </span>
+                                    <span class="rating-value"><?php echo number_format($rating, 1); ?></span>
+                                </div>
+                                <div class="tool-price <?php echo $has_free_plan ? 'free' : 'paid'; ?>">
+                                    <?php echo $has_free_plan ? '無料プランあり' : '有料'; ?>
+                                </div>
+                            </div>
                         </div>
-                        <div class="tool-price free">無料プランあり</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- ツールカード 4 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="AIツール画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">デザイン</span>
-                        <span class="tool-tag">画像生成</span>
-                    </div>
-                    <h3 class="tool-title">DesignMaster AI</h3>
-                    <p class="tool-description">テキスト入力からロゴ、バナー、SNS画像などを自動生成。デザインの知識がなくても美しいビジュアルを作成。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-value">4.5</span>
-                        </div>
-                        <div class="tool-price paid">¥1,980/月〜</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ツールカード 5 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="AIツール画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">音声</span>
-                        <span class="tool-tag">ナレーション</span>
-                    </div>
-                    <h3 class="tool-title">VoiceGenius AI</h3>
-                    <p class="tool-description">自然な音声でナレーションを生成。動画やポッドキャストの音声を簡単に作成できるAIツールです。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-value">4.6</span>
-                        </div>
-                        <div class="tool-price free">無料プランあり</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ツールカード 6 -->
-            <div class="tool-card">
-                <div class="tool-image">
-                    <img src="/api/placeholder/400/160" alt="AIツール画像">
-                </div>
-                <div class="tool-content">
-                    <div class="tool-tags">
-                        <span class="tool-tag">翻訳</span>
-                        <span class="tool-tag">多言語対応</span>
-                    </div>
-                    <h3 class="tool-title">TranslatorPro AI</h3>
-                    <p class="tool-description">高精度な自動翻訳ツール。40ヶ国語以上対応で、ビジネス文書、ウェブサイト、SNSの投稿などをネイティブレベルで翻訳。</p>
-                    <div class="tool-meta">
-                        <div class="tool-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-value">4.4</span>
-                        </div>
-                        <div class="tool-price paid">¥1,500/月〜</div>
-                    </div>
-                </div>
-            </div>
+                <?php
+                endwhile;
+                wp_reset_postdata();
+            else :
+                ?>
+                <p>現在登録されているAIツールはありません。</p>
+            <?php endif; ?>
         </div>
 
-        <!-- ページネーション -->
         <div class="pagination">
-            <div class="page-item disabled">
-                <a href="#" class="page-link page-prev">前へ</a>
-            </div>
-            <div class="page-item active">
-                <a href="#" class="page-link">1</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">2</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">3</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">4</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link">5</a>
-            </div>
-            <div class="page-item">
-                <a href="#" class="page-link page-next">次へ</a>
-            </div>
+            <?php
+            $current_page = max(1, get_query_var('paged'));
+            $total_pages = $ai_tools->max_num_pages;
+
+            // 前へリンク
+            if ($current_page > 1) {
+                echo '<div class="page-item">';
+                echo '<a href="' . esc_url(get_pagenum_link($current_page - 1)) . '" class="page-link page-prev">前へ</a>';
+                echo '</div>';
+            } else {
+                echo '<div class="page-item disabled">';
+                echo '<span class="page-link page-prev">前へ</span>';
+                echo '</div>';
+            }
+
+            // ページ番号リンク
+            $start_page = max(1, $current_page - 2);
+            $end_page = min($total_pages, $start_page + 4);
+
+            if ($start_page > 1) {
+                echo '<div class="page-item">';
+                echo '<a href="' . esc_url(get_pagenum_link(1)) . '" class="page-link">1</a>';
+                echo '</div>';
+
+                if ($start_page > 2) {
+                    echo '<div class="page-item disabled">';
+                    echo '<span class="page-link">...</span>';
+                    echo '</div>';
+                }
+            }
+
+            for ($i = $start_page; $i <= $end_page; $i++) {
+                if ($i == $current_page) {
+                    echo '<div class="page-item active">';
+                    echo '<span class="page-link">' . $i . '</span>';
+                    echo '</div>';
+                } else {
+                    echo '<div class="page-item">';
+                    echo '<a href="' . esc_url(get_pagenum_link($i)) . '" class="page-link">' . $i . '</a>';
+                    echo '</div>';
+                }
+            }
+
+            if ($end_page < $total_pages) {
+                if ($end_page < $total_pages - 1) {
+                    echo '<div class="page-item disabled">';
+                    echo '<span class="page-link">...</span>';
+                    echo '</div>';
+                }
+
+                echo '<div class="page-item">';
+                echo '<a href="' . esc_url(get_pagenum_link($total_pages)) . '" class="page-link">' . $total_pages . '</a>';
+                echo '</div>';
+            }
+
+            // 次へリンク
+            if ($current_page < $total_pages) {
+                echo '<div class="page-item">';
+                echo '<a href="' . esc_url(get_pagenum_link($current_page + 1)) . '" class="page-link page-next">次へ</a>';
+                echo '</div>';
+            } else {
+                echo '<div class="page-item disabled">';
+                echo '<span class="page-link page-next">次へ</span>';
+                echo '</div>';
+            }
+            ?>
         </div>
     </div>
 </section>
