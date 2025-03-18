@@ -500,7 +500,7 @@ if (!defined('ABSPATH')) exit; ?>
         }
 
         .tool-image {
-            height: 170px;
+            height: 300px;
             background-color: var(--bg-light);
             overflow: hidden;
         }
