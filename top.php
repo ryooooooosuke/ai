@@ -269,52 +269,55 @@ get_header();
                     }
             ?>
                     <!-- ツールカード -->
+                    <!-- ツールカード -->
                     <div class="tool-card">
-                        <div class="tool-image">
-                            <?php if ($thumbnail_url) : ?>
-                                <img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
-                            <?php else : ?>
-                                <img src="<?php echo get_theme_file_uri('assets/images/common/no-image.png'); ?>" alt="画像なし">
-                            <?php endif; ?>
-                        </div>
-                        <div class="tool-content">
-                            <div class="tool-tags">
-                                <?php if ($categories) : ?>
-                                    <?php foreach ($categories as $category) : ?>
-                                        <span class="tool-tag"><?php echo esc_html($category->name); ?></span>
-                                    <?php endforeach; ?>
+                        <a href="<?php the_permalink(); ?>" class="tool-link">
+                            <div class="tool-image">
+                                <?php if ($thumbnail_url) : ?>
+                                    <img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
+                                <?php else : ?>
+                                    <img src="<?php echo get_theme_file_uri('assets/images/common/no-image.png'); ?>" alt="画像なし">
                                 <?php endif; ?>
                             </div>
-                            <h3 class="tool-title"><?php the_title(); ?></h3>
-                            <p class="tool-description"><?php echo wp_trim_words(get_the_excerpt(), 40); ?></p>
-                            <div class="tool-meta">
-                                <div class="tool-rating">
-                                    <span class="stars">
-                                        <?php
-                                        $stars = '';
-                                        $full_stars = floor($rating);
-                                        $half_star = ($rating - $full_stars) >= 0.5;
-                                        $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
-
-                                        for ($i = 0; $i < $full_stars; $i++) {
-                                            $stars .= '★';
-                                        }
-                                        if ($half_star) {
-                                            $stars .= '☆';
-                                        }
-                                        for ($i = 0; $i < $empty_stars; $i++) {
-                                            $stars .= '☆';
-                                        }
-                                        echo $stars;
-                                        ?>
-                                    </span>
-                                    <span class="rating-value"><?php echo number_format($rating, 1); ?></span>
+                            <div class="tool-content">
+                                <div class="tool-tags">
+                                    <?php if ($categories) : ?>
+                                        <?php foreach ($categories as $category) : ?>
+                                            <span class="tool-tag"><?php echo esc_html($category->name); ?></span>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="tool-price <?php echo $has_free_plan ? 'free' : 'paid'; ?>">
-                                    <?php echo $has_free_plan ? '無料プランあり' : '有料'; ?>
+                                <h3 class="tool-title"><?php the_title(); ?></h3>
+                                <p class="tool-description"><?php echo wp_trim_words(get_the_excerpt(), 40); ?></p>
+                                <div class="tool-meta">
+                                    <div class="tool-rating">
+                                        <span class="stars">
+                                            <?php
+                                            $stars = '';
+                                            $full_stars = floor($rating);
+                                            $half_star = ($rating - $full_stars) >= 0.5;
+                                            $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
+
+                                            for ($i = 0; $i < $full_stars; $i++) {
+                                                $stars .= '★';
+                                            }
+                                            if ($half_star) {
+                                                $stars .= '☆';
+                                            }
+                                            for ($i = 0; $i < $empty_stars; $i++) {
+                                                $stars .= '☆';
+                                            }
+                                            echo $stars;
+                                            ?>
+                                        </span>
+                                        <span class="rating-value"><?php echo number_format($rating, 1); ?></span>
+                                    </div>
+                                    <div class="tool-price <?php echo $has_free_plan ? 'free' : 'paid'; ?>">
+                                        <?php echo $has_free_plan ? '無料プランあり' : '有料'; ?>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 <?php
                 endwhile;
