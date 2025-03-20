@@ -1697,7 +1697,7 @@ function display_pickup_meta_box($post)
             font-style: italic;
         }
     </style>
-<?php
+    <?php
 }
 
 /**
@@ -1775,3 +1775,484 @@ function add_custom_query_vars($vars)
     return $vars;
 }
 add_filter('query_vars', 'add_custom_query_vars');
+
+
+/**
+ * AIツールのフィルタリングとソート用のAjax処理
+ */
+function filter_ai_tools_ajax()
+{
+    // セキュリティチェック
+    check_ajax_referer('filter_ai_tools_nonce', 'nonce');
+
+    $category = isset($_POST['category']) ? sanitize_text_field($_POST['category']) : 'all';
+    $sort = isset($_POST['sort']) ? sanitize_text_field($_POST['sort']) : 'newest';
+    $keyword = isset($_POST['keyword']) ? sanitize_text_field($_POST['keyword']) : '';
+    $paged = isset($_POST['paged']) ? intval($_POST['paged']) : 1;
+
+    // デバッグ情報をログに記録
+    error_log('フィルタリングリクエスト: カテゴリ=' . $category . ', ソート=' . $sort . ', キーワード=' . $keyword . ', ページ=' . $paged);
+
+    // クエリ引数の準備
+    $args = array(
+        'post_type' => 'ai_tool',
+        'posts_per_page' => 6,
+        'paged' => $paged
+    );
+
+    // カテゴリフィルター
+    if ($category !== 'all') {
+        $args['tax_query'] = array(
+            array(
+                'taxonomy' => 'ai_category',
+                'field' => 'slug',
+                'terms' => $category
+            )
+        );
+    }
+
+    // キーワード検索
+    if (!empty($keyword)) {
+        $args['s'] = $keyword;
+    }
+
+    // ソート順
+    if ($sort === 'rating') {
+        $args['meta_key'] = '_tool_rating';
+        $args['orderby'] = 'meta_value_num';
+        $args['order'] = 'DESC';
+    } else { // newest
+        $args['orderby'] = 'date';
+        $args['order'] = 'DESC';
+    }
+
+    error_log('WP_Queryの引数: ' . print_r($args, true));
+
+    $ai_tools = new WP_Query($args);
+    error_log('検索結果件数: ' . $ai_tools->found_posts);
+
+    ob_start();
+
+    if ($ai_tools->have_posts()) :
+        while ($ai_tools->have_posts()) : $ai_tools->the_post();
+            // カテゴリーを取得
+            $categories = get_the_terms(get_the_ID(), 'ai_category');
+            // 評価を取得
+            $rating = get_post_meta(get_the_ID(), '_tool_rating', true);
+            if (!$rating) {
+                $rating = 0;
+            }
+            // 料金プランを取得
+            $pricing_plans = get_post_meta(get_the_ID(), '_pricing_plans', true);
+            $has_free_plan = false;
+            if ($pricing_plans && is_array($pricing_plans)) {
+                foreach ($pricing_plans as $tab) {
+                    if (isset($tab['details']) && is_array($tab['details'])) {
+                        foreach ($tab['details'] as $plan) {
+                            if (isset($plan['price']) && ($plan['price'] == '0' || $plan['price'] == '無料')) {
+                                $has_free_plan = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+            // ギャラリー画像を取得
+            $gallery_images = get_post_meta(get_the_ID(), '_gallery_images', true);
+            $thumbnail_url = '';
+            if ($gallery_images && isset($gallery_images[0])) {
+                $thumbnail_url = wp_get_attachment_image_url($gallery_images[0], 'medium');
+            } elseif (has_post_thumbnail()) {
+                $thumbnail_url = get_the_post_thumbnail_url(get_the_ID(), 'medium');
+            }
+    ?>
+            <!-- ツールカード -->
+            <div class="tool-card">
+                <a href="<?php the_permalink(); ?>" class="tool-link">
+                    <div class="tool-image">
+                        <?php if ($thumbnail_url) : ?>
+                            <img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
+                        <?php else : ?>
+                            <img src="<?php echo get_stylesheet_directory_uri(); ?>/assets/images/common/no-image.png" alt="画像なし">
+                        <?php endif; ?>
+                    </div>
+                    <div class="tool-content">
+                        <div class="tool-tags">
+                            <?php if ($categories) : ?>
+                                <?php foreach ($categories as $category) : ?>
+                                    <span class="tool-tag"><?php echo esc_html($category->name); ?></span>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <h3 class="tool-title"><?php the_title(); ?></h3>
+                        <p class="tool-description"><?php echo wp_trim_words(get_the_excerpt(), 40); ?></p>
+                        <div class="tool-meta">
+                            <div class="tool-rating">
+                                <span class="stars">
+                                    <?php
+                                    $stars = '';
+                                    $full_stars = floor($rating);
+                                    $half_star = ($rating - $full_stars) >= 0.5;
+                                    $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
+
+                                    for ($i = 0; $i < $full_stars; $i++) {
+                                        $stars .= '★';
+                                    }
+                                    if ($half_star) {
+                                        $stars .= '☆';
+                                    }
+                                    for ($i = 0; $i < $empty_stars; $i++) {
+                                        $stars .= '☆';
+                                    }
+                                    echo $stars;
+                                    ?>
+                                </span>
+                                <span class="rating-value"><?php echo number_format($rating, 1); ?></span>
+                            </div>
+                            <div class="tool-price <?php echo $has_free_plan ? 'free' : 'paid'; ?>">
+                                <?php echo $has_free_plan ? '無料プランあり' : '有料'; ?>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        <?php
+        endwhile;
+    else :
+        ?>
+        <p>条件に一致するAIツールはありません。</p>
+    <?php endif;
+
+    $html = ob_get_clean();
+
+    // ページネーション
+    ob_start();
+
+    $current_page = $paged;
+    $total_pages = $ai_tools->max_num_pages;
+
+    // 前へリンク
+    if ($current_page > 1) {
+        echo '<div class="page-item">';
+        echo '<a href="#" class="page-link page-prev" data-page="' . ($current_page - 1) . '">前へ</a>';
+        echo '</div>';
+    } else {
+        echo '<div class="page-item disabled">';
+        echo '<span class="page-link page-prev">前へ</span>';
+        echo '</div>';
+    }
+
+    // ページ番号リンク
+    $start_page = max(1, $current_page - 2);
+    $end_page = min($total_pages, $start_page + 4);
+
+    if ($start_page > 1) {
+        echo '<div class="page-item">';
+        echo '<a href="#" class="page-link" data-page="1">1</a>';
+        echo '</div>';
+
+        if ($start_page > 2) {
+            echo '<div class="page-item disabled">';
+            echo '<span class="page-link">...</span>';
+            echo '</div>';
+        }
+    }
+
+    for ($i = $start_page; $i <= $end_page; $i++) {
+        if ($i == $current_page) {
+            echo '<div class="page-item active">';
+            echo '<span class="page-link">' . $i . '</span>';
+            echo '</div>';
+        } else {
+            echo '<div class="page-item">';
+            echo '<a href="#" class="page-link" data-page="' . $i . '">' . $i . '</a>';
+            echo '</div>';
+        }
+    }
+
+    if ($end_page < $total_pages) {
+        if ($end_page < $total_pages - 1) {
+            echo '<div class="page-item disabled">';
+            echo '<span class="page-link">...</span>';
+            echo '</div>';
+        }
+
+        echo '<div class="page-item">';
+        echo '<a href="#" class="page-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
+        echo '</div>';
+    }
+
+    // 次へリンク
+    if ($current_page < $total_pages) {
+        echo '<div class="page-item">';
+        echo '<a href="#" class="page-link page-next" data-page="' . ($current_page + 1) . '">次へ</a>';
+        echo '</div>';
+    } else {
+        echo '<div class="page-item disabled">';
+        echo '<span class="page-link page-next">次へ</span>';
+        echo '</div>';
+    }
+
+    $pagination = ob_get_clean();
+
+    wp_reset_postdata();
+
+    wp_send_json_success(array(
+        'html' => $html,
+        'pagination' => $pagination
+    ));
+}
+add_action('wp_ajax_filter_ai_tools', 'filter_ai_tools_ajax');
+add_action('wp_ajax_nopriv_filter_ai_tools', 'filter_ai_tools_ajax');
+
+/**
+ * AIツールのURL設定用メタボックスを追加
+ */
+function ai_tools_url_meta_box()
+{
+    add_meta_box(
+        'ai_tools_url',
+        'ツールURL設定',
+        'ai_tools_url_callback',
+        'ai_tool',      // AIツールのカスタム投稿タイプ
+        'normal',       // 表示位置
+        'high'          // 優先度
+    );
+}
+add_action('add_meta_boxes', 'ai_tools_url_meta_box');
+
+/**
+ * URL設定メタボックスの内容を表示
+ */
+function ai_tools_url_callback($post)
+{
+    wp_nonce_field(basename(__FILE__), 'ai_tools_url_nonce');
+
+    // 保存済みのURLを取得
+    $tool_url = get_post_meta($post->ID, '_tool_url', true);
+
+    // テンプレート表示
+    ?>
+    <div class="ai-url-container">
+        <p class="url-description">
+            AIツールの公式サイトまたは利用ページのURLを入力してください。
+            このURLは「公式サイトへ」ボタンのリンク先として使用されます。
+        </p>
+
+        <div class="url-input-container">
+            <label for="tool_url">URL：</label>
+            <input type="url" id="tool_url" name="tool_url"
+                value="<?php echo esc_url($tool_url); ?>"
+                class="widefat"
+                placeholder="https://example.com">
+        </div>
+    </div>
+
+    <style>
+        .ai-url-container {
+            margin: 15px 0;
+        }
+
+        .url-description {
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .url-input-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .url-input-container label {
+            font-weight: 600;
+            margin-right: 10px;
+            min-width: 50px;
+        }
+
+        #tool_url {
+            flex: 1;
+            padding: 8px;
+        }
+    </style>
+<?php
+}
+
+/**
+ * URL設定を保存
+ */
+function save_ai_tools_url($post_id)
+{
+    // 自動保存の場合は処理しない
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    // カスタム投稿タイプが一致することを確認
+    if (get_post_type($post_id) !== 'ai_tool') {
+        return;
+    }
+
+    // 権限チェック
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    // nonceの検証
+    if (!isset($_POST['ai_tools_url_nonce']) || !wp_verify_nonce($_POST['ai_tools_url_nonce'], basename(__FILE__))) {
+        return;
+    }
+
+    // URLデータを保存
+    if (isset($_POST['tool_url'])) {
+        $tool_url = esc_url_raw($_POST['tool_url']);
+        update_post_meta($post_id, '_tool_url', $tool_url);
+    }
+}
+add_action('save_post', 'save_ai_tools_url');
+
+/**
+ * AIツールの特徴設定用メタボックスを追加
+ */
+function ai_tools_features_meta_box()
+{
+    add_meta_box(
+        'ai_tools_features',
+        'ツールの主な特徴',
+        'ai_tools_features_callback',
+        'ai_tool',      // AIツールのカスタム投稿タイプ
+        'normal',       // 表示位置
+        'high'          // 優先度
+    );
+}
+add_action('add_meta_boxes', 'ai_tools_features_meta_box');
+
+/**
+ * 特徴設定メタボックスの内容を表示
+ */
+function ai_tools_features_callback($post)
+{
+    wp_nonce_field(basename(__FILE__), 'ai_tools_features_nonce');
+
+    // 保存済みの特徴を取得
+    $features = get_post_meta($post->ID, '_features', true);
+    if (!is_array($features)) {
+        $features = array('', '', ''); // デフォルトで3つの空の特徴
+    }
+
+    // 特徴が3つ未満の場合は3つになるように調整
+    while (count($features) < 3) {
+        $features[] = '';
+    }
+
+    // テンプレート表示
+?>
+    <div class="ai-features-container">
+        <p class="features-description">
+            AIツールの主な特徴を入力してください（最大5つ）。
+            各特徴は簡潔に記述し、ツールの強みや独自性を強調してください。
+        </p>
+
+        <div class="features-list">
+            <?php for ($i = 0; $i < 5; $i++) : ?>
+                <div class="feature-item">
+                    <div class="feature-number"><?php echo $i + 1; ?></div>
+                    <div class="feature-input-container">
+                        <input type="text" name="features[]"
+                            value="<?php echo esc_attr(isset($features[$i]) ? $features[$i] : ''); ?>"
+                            class="widefat"
+                            placeholder="例：高精度な自然言語処理が可能">
+                    </div>
+                </div>
+            <?php endfor; ?>
+        </div>
+    </div>
+
+    <style>
+        .ai-features-container {
+            margin: 15px 0;
+        }
+
+        .features-description {
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-number {
+            background-color: #6b9ade;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .feature-input-container {
+            flex: 1;
+        }
+
+        .feature-input-container input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+<?php
+}
+
+/**
+ * 特徴設定を保存
+ */
+function save_ai_tools_features($post_id)
+{
+    // 自動保存の場合は処理しない
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    // カスタム投稿タイプが一致することを確認
+    if (get_post_type($post_id) !== 'ai_tool') {
+        return;
+    }
+
+    // 権限チェック
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    // nonceの検証
+    if (!isset($_POST['ai_tools_features_nonce']) || !wp_verify_nonce($_POST['ai_tools_features_nonce'], basename(__FILE__))) {
+        return;
+    }
+
+    // 特徴データを保存
+    if (isset($_POST['features']) && is_array($_POST['features'])) {
+        $features = array_map('sanitize_text_field', $_POST['features']);
+
+        // 空の特徴を削除
+        $features = array_filter($features, function ($feature) {
+            return !empty(trim($feature));
+        });
+
+        update_post_meta($post_id, '_features', $features);
+    } else {
+        delete_post_meta($post_id, '_features');
+    }
+}
+add_action('save_post', 'save_ai_tools_features');

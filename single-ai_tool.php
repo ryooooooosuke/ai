@@ -353,7 +353,6 @@ if (!is_array($gallery_images)) {
     }
 
     .product-media img {
-        width: 100%;
         height: auto;
         border-radius: var(--radius);
         transition: transform 0.3s ease;
@@ -1109,21 +1108,9 @@ if (!is_array($gallery_images)) {
         font-size: 24px;
         font-weight: 700;
         color: var(--text);
-        margin-bottom: 25px;
+        margin-bottom: 40px;
         position: relative;
         padding-left: 15px;
-    }
-
-    .section-title::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 24px;
-        background-color: var(--main-color);
-        border-radius: 2px;
     }
 
     .products-grid {
@@ -1414,15 +1401,161 @@ if (!is_array($gallery_images)) {
         text-align: center;
     }
 
+    /* サイドパネルのスタイル */
+    .product-layout {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .product-media-column {
+        flex: 1;
+        max-width: 60%;
+    }
+
+    .product-info-column {
+        flex: 1;
+        max-width: 50%;
+    }
+
+    .product-side-panel {
+        background-color: var(--bg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .panel-header {
+        background-color: var(--main-light);
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .panel-header i {
+        color: var(--main-color);
+        font-size: 18px;
+    }
+
+    .panel-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+    }
+
+    .panel-body {
+        padding: 20px;
+    }
+
+    .panel-price-tag {
+        margin-bottom: 20px;
+    }
+
+    .panel-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    .panel-btn {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px 24px;
+    }
+
+    .panel-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 15px;
+    }
+
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+    }
+
+    .feature-item {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .feature-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: var(--main-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .feature-icon i {
+        color: var(--main-color);
+        font-size: 12px;
+    }
+
+    .feature-text {
+        font-size: 14px;
+        color: var(--text);
+    }
+
+    .panel-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14px;
+        color: var(--main-color);
+        font-weight: 500;
+    }
+
+    .panel-link i {
+        font-size: 12px;
+        transition: transform 0.3s ease;
+    }
+
+    .panel-link:hover i {
+        transform: translateX(3px);
+    }
+
     /* レスポンシブ対応 */
     @media (max-width: 1024px) {
+        .product-layout {
+            flex-direction: column;
+        }
 
+        .product-media-column,
+        .product-info-column {
+            max-width: 100%;
+        }
+
+        .product-side-panel {
+            margin-bottom: 30px;
+        }
 
         .product-info-container {
             position: static;
             margin-bottom: 30px;
         }
     }
+
+    @media (min-width: 768px) {
+        .product-media {
+            margin-left: 30px;
+        }
+    }
+
 
     @media (max-width: 991px) {
         .footer-grid {
@@ -1474,6 +1607,9 @@ if (!is_array($gallery_images)) {
             gap: 30px;
         }
 
+        .panel-actions {
+            flex-direction: column;
+        }
     }
 
     @media (max-width: 576px) {
@@ -1505,6 +1641,18 @@ if (!is_array($gallery_images)) {
         .footer-grid {
             grid-template-columns: 1fr;
             gap: 30px;
+        }
+
+        .panel-header {
+            padding: 12px 15px;
+        }
+
+        .panel-body {
+            padding: 15px;
+        }
+
+        .panel-title {
+            font-size: 16px;
         }
     }
 </style>
@@ -1559,42 +1707,102 @@ if (!is_array($gallery_images)) {
                 <div class="rating-count">おすすめ評価</div>
             </div>
         </div>
-        <div class="product-actions">
-            <a href="#" class="btn btn-outline btn-sm favorite-btn" data-tool-id="<?php echo get_the_ID(); ?>">
-                <i class="far fa-heart"></i> お気に入り
-            </a>
-            <?php if ($tool_url) : ?>
-                <a href="<?php echo esc_url($tool_url); ?>" class="btn btn-outline btn-sm" target="_blank">
-                    <i class="far fa-share-square"></i> 公式サイトへ
-                </a>
-            <?php endif; ?>
-        </div>
     </div>
 
     <!-- 商品メインコンテンツ -->
     <div class="product-main">
-        <?php if (!empty($gallery_images)) : ?>
-            <div class="product-thumbnails">
-                <?php foreach ($gallery_images as $index => $image_url) : ?>
-                    <?php if ($index < 3) : // 最大3枚のサムネイルを表示
+        <!-- 2カラムレイアウト -->
+        <div class="product-layout">
+            <!-- 左カラム：メイン画像とサムネイル -->
+            <div class="product-media-column">
+                <div class="product-media">
+                    <?php
+                    // ギャラリー画像があればメイン画像として最初の画像を表示
+                    if (!empty($gallery_images) && isset($gallery_images[0])) {
+                        $main_image_url = $gallery_images[0];
+                    } else {
+                        // ギャラリー画像がなければアイキャッチ画像を表示
+                        $main_image_url = $thumbnail_url;
+                    }
                     ?>
-                        <div class="product-thumbnail" data-image="<?php echo esc_url($image_url); ?>">
-                            <img src="<?php echo esc_url($image_url); ?>" alt="<?php the_title_attribute(); ?> サムネイル <?php echo $index + 1; ?>">
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
+                    <img src="<?php echo esc_url($main_image_url); ?>" alt="<?php the_title_attribute(); ?>">
+                </div>
 
-        <!-- 商品タブ -->
+                <?php if (!empty($gallery_images)) : ?>
+                    <div class="product-thumbnails">
+                        <?php
+                        // メイン画像も含めてサムネイルとして表示
+                        foreach ($gallery_images as $index => $image_url) :
+                            if ($index < 4) : // 最大4枚のサムネイルを表示
+                        ?>
+                                <div class="product-thumbnail <?php echo ($index === 0) ? 'active' : ''; ?>" data-image="<?php echo esc_url($image_url); ?>">
+                                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php the_title_attribute(); ?> サムネイル <?php echo $index + 1; ?>">
+                                </div>
+                        <?php
+                            endif;
+                        endforeach;
+                        ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- 右カラム：情報サイドパネル -->
+            <div class="product-info-column">
+                <div class="product-side-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h4 class="panel-title">ツール基本情報</h4>
+                    </div>
+
+                    <div class="panel-body">
+                        <!-- 料金タグ -->
+                        <div class="panel-price-tag">
+                            <?php if ($has_free_plan) : ?>
+                                <span class="product-price-free">無料/有料</span>
+                            <?php else : ?>
+                                <span class="product-price-paid">有料</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- アクションボタン -->
+                        <div class="panel-actions">
+                            <?php if ($tool_url) : ?>
+                                <a href="<?php echo esc_url($tool_url); ?>" class="btn panel-btn" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> 公式サイトへ
+                                </a>
+                            <?php endif; ?>
+
+                            <a href="#" class="btn btn-outline panel-btn favorite-btn" data-tool-id="<?php echo get_the_ID(); ?>">
+                                <i class="far fa-heart"></i> お気に入り
+                            </a>
+                        </div>
+
+                        <!-- 特徴リスト -->
+                        <?php if (!empty($features) && is_array($features)) : ?>
+                            <div class="product-features">
+                                <h3 class="section-title">主な特徴</h3>
+                                <ul class="features-list">
+                                    <?php foreach ($features as $feature) : ?>
+                                        <li class="feature-item">
+                                            <span class="feature-icon"><i class="fas fa-check-circle"></i></span>
+                                            <span class="feature-text"><?php echo esc_html($feature); ?></span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        <?php endif; ?>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- タブエリア -->
         <div class="product-tabs">
             <div class="tab-nav">
                 <div class="tab-item active" data-tab="overview">概要</div>
                 <?php if ($pricing_plans && is_array($pricing_plans) && !empty($pricing_plans)) : ?>
                     <div class="tab-item" data-tab="pricing">料金</div>
-                <?php endif; ?>
-                <?php if (!empty($gallery_images)) : ?>
-                    <div class="tab-item" data-tab="gallery">ギャラリー</div>
                 <?php endif; ?>
                 <div class="tab-item" data-tab="articles">関連コラム</div>
                 <div class="tab-item" data-tab="related">関連AIツール</div>
@@ -1607,25 +1815,6 @@ if (!is_array($gallery_images)) {
                         <?php the_content(); ?>
                     </div>
                 </div>
-
-                <?php if ($features && is_array($features) && !empty($features)) : ?>
-                    <div class="tab-section">
-                        <h3 class="tab-section-title">主な特徴</h3>
-                        <div class="tab-section-content">
-                            <div class="features-grid">
-                                <?php foreach ($features as $feature) : ?>
-                                    <div class="feature-card">
-                                        <div class="feature-icon">
-                                            <i class="<?php echo esc_attr($feature['icon'] ?? 'fas fa-check-circle'); ?>"></i>
-                                        </div>
-                                        <h4 class="feature-title"><?php echo esc_html($feature['title']); ?></h4>
-                                        <p class="feature-description"><?php echo esc_html($feature['description']); ?></p>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
             </div>
 
             <!-- 料金タブ -->
@@ -1699,22 +1888,6 @@ if (!is_array($gallery_images)) {
                 </div>
             <?php endif; ?>
 
-            <!-- ギャラリータブ -->
-            <?php if (!empty($gallery_images)) : ?>
-                <div class="tab-content" id="gallery">
-                    <div class="tab-section">
-                        <h3 class="tab-section-title">ギャラリー</h3>
-                        <div class="gallery-grid">
-                            <?php foreach ($gallery_images as $image_url) : ?>
-                                <a href="<?php echo esc_url($image_url); ?>" class="gallery-item lightbox">
-                                    <img src="<?php echo esc_url($image_url); ?>" alt="<?php the_title_attribute(); ?> ギャラリー画像">
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-
             <!-- 関連コラムタブ -->
             <div class="tab-content" id="articles">
                 <div class="tab-section">
@@ -1742,17 +1915,24 @@ if (!is_array($gallery_images)) {
                         ),
                     ));
 
-                    if ($related_posts->have_posts()) :
-                    ?>
+                    if ($related_posts->have_posts()) : ?>
                         <div class="articles-grid">
                             <?php while ($related_posts->have_posts()) : $related_posts->the_post(); ?>
                                 <div class="article-card">
                                     <a href="<?php the_permalink(); ?>" class="article-link">
                                         <div class="article-image">
-                                            <?php if (has_post_thumbnail()) : ?>
-                                                <?php the_post_thumbnail('medium'); ?>
-                                            <?php else : ?>
-                                                <img src="<?php echo get_theme_file_uri('assets/images/common/no-image.png'); ?>" alt="画像なし">
+                                            <?php
+                                            // 投稿のサムネイルIDを取得
+                                            $post_thumbnail_id = get_post_thumbnail_id();
+
+                                            // サムネイルが設定されているか確認
+                                            if ($post_thumbnail_id) :
+                                                // サムネイルがある場合は表示
+                                                the_post_thumbnail('medium');
+                                            else :
+                                                // サムネイルがない場合はno-image表示
+                                            ?>
+                                                <img src="<?php echo esc_url(get_theme_file_uri('assets/images/common/no-image.png')); ?>" alt="画像なし">
                                             <?php endif; ?>
                                         </div>
                                         <div class="article-content">
@@ -1987,6 +2167,39 @@ if (!is_array($gallery_images)) {
                 localStorage.setItem('favorites', JSON.stringify(favorites));
             });
         }
+
+        // サイドパネルからタブへのスムーススクロール
+        const panelLinks = document.querySelectorAll('.panel-link');
+
+        panelLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                const targetTab = targetId.replace('#', '');
+                const targetElement = document.getElementById(targetTab);
+
+                // タブをアクティブにする
+                document.querySelectorAll('.tab-item').forEach(tab => {
+                    tab.classList.remove('active');
+                    if (tab.getAttribute('data-tab') === targetTab) {
+                        tab.classList.add('active');
+                    }
+                });
+
+                // タブコンテンツをアクティブにする
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                targetElement.classList.add('active');
+
+                // スクロール
+                window.scrollTo({
+                    top: targetElement.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            });
+        });
 
         // ライトボックス機能
         const galleryLinks = document.querySelectorAll('.lightbox');
