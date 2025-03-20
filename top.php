@@ -212,7 +212,7 @@ get_header();
                     ?>
                 </select>
                 <select class="tools-filter-select" id="sort-filter">
-                    <option value="popular">人気順</option>
+                    <!-- <option value="popular">人気順</option> -->
                     <option value="newest">新着順</option>
                     <option value="rating">評価順</option>
                 </select>
@@ -224,7 +224,7 @@ get_header();
             <button class="search-button" id="ai-tool-search-button">検索</button>
         </div>
 
-        <div class="tools-grid">
+        <div class="tools-grid" id="tools-grid-container">
             <?php
             // AIツールを取得
             $args = array(
@@ -269,14 +269,14 @@ get_header();
                     }
             ?>
                     <!-- ツールカード -->
-                    <!-- ツールカード -->
                     <div class="tool-card">
                         <a href="<?php the_permalink(); ?>" class="tool-link">
                             <div class="tool-image">
                                 <?php if ($thumbnail_url) : ?>
                                     <img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php the_title_attribute(); ?>">
                                 <?php else : ?>
-                                    <img src="<?php echo get_theme_file_uri('assets/images/common/no-image.png'); ?>" alt="画像なし">
+                                    <!-- パスを修正 -->
+                                    <img src="<?php echo get_template_directory_uri(); ?>/assets/images/common/no-image.png" alt="画像なし">
                                 <?php endif; ?>
                             </div>
                             <div class="tool-content">
@@ -328,7 +328,7 @@ get_header();
             <?php endif; ?>
         </div>
 
-        <div class="pagination">
+        <div class="pagination" id="tools-pagination">
             <?php
             $current_page = max(1, get_query_var('paged'));
             $total_pages = $ai_tools->max_num_pages;
@@ -469,6 +469,98 @@ get_header();
 </section>
 
 <?php get_footer(); ?>
-</body>
 
-</html>
+
+<!-- jQueryを使用したスクリプト -->
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        // jQueryが読み込まれるのを待つ
+        function checkJquery() {
+            if (window.jQuery) {
+                initializeFilters(jQuery);
+            } else {
+                setTimeout(checkJquery, 50);
+            }
+        }
+
+        checkJquery();
+
+        function initializeFilters($) {
+            console.log('フィルター初期化'); // デバッグ用
+
+            // カテゴリフィルターとソートの変更を検知
+            $('#category-filter, #sort-filter').on('change', function() {
+                console.log('フィルター変更: ' + $(this).val()); // デバッグ用
+                filterAndSortTools();
+            });
+
+            // 検索ボタンクリック時
+            $('#ai-tool-search-button').on('click', function() {
+                filterAndSortTools();
+            });
+
+            // Enterキー押下時も検索実行
+            $('#ai-tool-search').on('keypress', function(e) {
+                if (e.which === 13) {
+                    filterAndSortTools();
+                }
+            });
+
+            // ページネーションのクリックイベントを委任
+            $(document).on('click', '#tools-pagination .page-link', function(e) {
+                e.preventDefault();
+                var page = $(this).data('page');
+                if (page) {
+                    filterAndSortTools(page);
+                }
+            });
+
+            function filterAndSortTools(page = 1) {
+                var category = $('#category-filter').val();
+                var sort = $('#sort-filter').val();
+                var keyword = $('#ai-tool-search').val();
+
+                console.log('フィルタリング実行:');
+                console.log('カテゴリ: ' + category);
+                console.log('並び順: ' + sort);
+                console.log('キーワード: ' + keyword);
+                console.log('ページ: ' + page);
+
+                // ローディング表示
+                $('#tools-grid-container').html('<p class="loading-text">読み込み中...</p>');
+
+                $.ajax({
+                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                    type: 'POST',
+                    data: {
+                        action: 'filter_ai_tools',
+                        category: category,
+                        sort: sort,
+                        keyword: keyword,
+                        paged: page,
+                        nonce: '<?php echo wp_create_nonce('filter_ai_tools_nonce'); ?>'
+                    },
+                    success: function(response) {
+                        console.log('Ajax成功:', response); // デバッグ用
+                        if (response.success) {
+                            $('#tools-grid-container').html(response.data.html);
+                            $('#tools-pagination').html(response.data.pagination);
+
+                            // スクロール位置を調整
+                            $('html, body').animate({
+                                scrollTop: $('#ai-tools-list').offset().top - 100
+                            }, 500);
+                        } else {
+                            $('#tools-grid-container').html('<p>エラーが発生しました。再度お試しください。</p>');
+                            console.error('レスポンスエラー:', response); // デバッグ用
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#tools-grid-container').html('<p>エラーが発生しました。再度お試しください。</p>');
+                        console.error('Ajaxエラー:', status, error, xhr.responseText); // デバッグ用
+                    }
+                });
+            }
+        }
+    });
+</script>
