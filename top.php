@@ -47,144 +47,43 @@ get_header();
         <p class="section-subtitle">あなたの副業スタイルに合わせた最適なAIツールをカテゴリから見つけることができます</p>
 
         <div class="category-nav">
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">完全無料</p>
-            </a>
+            <?php
+            // カテゴリを取得
+            $categories = get_terms(array(
+                'taxonomy' => 'ai_category',
+                'hide_empty' => false,
+            ));
 
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon2.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">ログイン不要</p>
-            </a>
+            // 「すべて」のカテゴリアイコンを追加
+            echo '<a href="javascript:void(0)" class="category-icon-item" data-category="all">';
+            echo '<div class="category-icon-box">';
+            echo '<img src="' . get_theme_file_uri('assets/images/category_icon/cagegory_icon_all.svg') . '" alt="すべて">';
+            echo '</div>';
+            echo '<p class="category-icon-text">すべて</p>';
+            echo '</a>';
 
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">ブログ・SEO</p>
-            </a>
+            // カテゴリアイコンを表示（カテゴリに設定されたアイコンを使用）
+            foreach ($categories as $category) {
+                // カテゴリに設定されたアイコン画像IDを取得
+                $image_id = get_term_meta($category->term_id, 'ai_category_image', true);
+                $icon_url = '';
 
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">画像生成</p>
-            </a>
+                if ($image_id) {
+                    // アイコン画像のURLを取得
+                    $icon_url = wp_get_attachment_image_url($image_id, 'thumbnail');
+                } else {
+                    // デフォルトアイコン（アイコンが設定されていない場合）
+                    $icon_url = get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg');
+                }
 
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">動画生成</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">AIアバター</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">音楽</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">資料生成</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">開発</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">もっと見る</p>
-            </a>
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">完全無料</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">ログイン不要</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">ブログ・SEO</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">画像生成</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">動画生成</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">AIアバター</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">音楽</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">資料生成</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">開発</p>
-            </a>
-
-            <a href="#" class="category-icon-item">
-                <div class="category-icon-box">
-                    <img src="<?php echo get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg'); ?>" alt="完全無料">
-                </div>
-                <p class="category-icon-text">もっと見る</p>
-            </a>
+                echo '<a href="javascript:void(0)" class="category-icon-item" data-category="' . esc_attr($category->slug) . '">';
+                echo '<div class="category-icon-box">';
+                echo '<img src="' . esc_url($icon_url) . '" alt="' . esc_attr($category->name) . '">';
+                echo '</div>';
+                echo '<p class="category-icon-text">' . esc_html($category->name) . '</p>';
+                echo '</a>';
+            }
+            ?>
         </div>
     </div>
 </section>
@@ -472,26 +371,65 @@ get_header();
 
 
 <!-- jQueryを使用したスクリプト -->
+<?php get_footer(); ?>
+
 <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        // jQueryが読み込まれるのを待つ
-        function checkJquery() {
-            if (window.jQuery) {
-                initializeFilters(jQuery);
-            } else {
-                setTimeout(checkJquery, 50);
-            }
-        }
+    // jQueryを手動で読み込む
+    var jqueryScript = document.createElement('script');
+    jqueryScript.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
+    jqueryScript.onload = function() {
+        console.log('jQuery手動読み込み完了');
+        initializeFilters();
+    };
+    document.head.appendChild(jqueryScript);
 
-        checkJquery();
+    function initializeFilters() {
+        console.log('フィルター初期化開始');
 
-        function initializeFilters($) {
-            console.log('フィルター初期化'); // デバッグ用
+        // jQueryを使用
+        jQuery(document).ready(function($) {
+            console.log('jQuery実行開始');
+
+            // セレクトボックスの選択肢をデバッグ出力
+            console.log('カテゴリセレクトボックスの選択肢:');
+            $('#category-filter option').each(function() {
+                console.log($(this).val() + ' - ' + $(this).text());
+            });
 
             // カテゴリフィルターとソートの変更を検知
             $('#category-filter, #sort-filter').on('change', function() {
-                console.log('フィルター変更: ' + $(this).val()); // デバッグ用
+                console.log('フィルター変更: ' + $(this).val());
                 filterAndSortTools();
+            });
+
+            // カテゴリアイコンクリック時
+            $('.category-icon-item').on('click', function(e) {
+                e.preventDefault();
+                var category = $(this).data('category');
+                console.log('カテゴリアイコンクリック: ' + category);
+
+                // セレクトボックスの値を変更
+                if (category) {
+                    // セレクトボックスに該当する値があるか確認
+                    var found = false;
+                    $('#category-filter option').each(function() {
+                        if ($(this).val() === category) {
+                            found = true;
+                            return false; // eachループを抜ける
+                        }
+                    });
+
+                    if (found) {
+                        $('#category-filter').val(category).trigger('change');
+                        console.log('セレクトボックス値設定: ' + category);
+                    } else {
+                        console.log('セレクトボックスに該当する値がありません: ' + category);
+                        // 全てのカテゴリを選択
+                        $('#category-filter').val('all').trigger('change');
+                    }
+                } else {
+                    console.error('カテゴリデータ属性が設定されていません');
+                }
             });
 
             // 検索ボタンクリック時
@@ -540,8 +478,17 @@ get_header();
                         paged: page,
                         nonce: '<?php echo wp_create_nonce('filter_ai_tools_nonce'); ?>'
                     },
+                    beforeSend: function() {
+                        console.log('Ajaxリクエスト送信データ:', {
+                            action: 'filter_ai_tools',
+                            category: category,
+                            sort: sort,
+                            keyword: keyword,
+                            paged: page
+                        });
+                    },
                     success: function(response) {
-                        console.log('Ajax成功:', response); // デバッグ用
+                        console.log('Ajax成功:', response);
                         if (response.success) {
                             $('#tools-grid-container').html(response.data.html);
                             $('#tools-pagination').html(response.data.pagination);
@@ -552,15 +499,20 @@ get_header();
                             }, 500);
                         } else {
                             $('#tools-grid-container').html('<p>エラーが発生しました。再度お試しください。</p>');
-                            console.error('レスポンスエラー:', response); // デバッグ用
+                            console.error('レスポンスエラー:', response);
                         }
                     },
                     error: function(xhr, status, error) {
                         $('#tools-grid-container').html('<p>エラーが発生しました。再度お試しください。</p>');
-                        console.error('Ajaxエラー:', status, error, xhr.responseText); // デバッグ用
+                        console.error('Ajaxエラー:', status, error);
+                        console.error('レスポンステキスト:', xhr.responseText);
                     }
                 });
             }
-        }
-    });
+
+            console.log('jQuery実行完了');
+        });
+
+        console.log('フィルター初期化完了');
+    }
 </script>
