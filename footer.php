@@ -34,20 +34,20 @@ if (!defined('ABSPATH')) exit; ?>
                     AI×副業ポータルは、最新のAI技術を活用して副業の効率を向上させるための情報ポータルサイトです。厳選されたAIツールやノウハウを紹介しています。
                 </p>
                 <div class="footer-social">
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
+                    <a href="#"><img src="<?php echo get_theme_file_uri('assets/images/common/youtube-brands.svg'); ?>" alt="YouTube" class="footer-social-icon youtube-icon"></a>
+                    <a href="#"><img src="<?php echo get_theme_file_uri('assets/images/common/instagram-brands.svg'); ?>" alt="Instagram" class="footer-social-icon instagram-icon"></a>
+                    <a href="#"><img src="<?php echo get_theme_file_uri('assets/images/common/twitter-brands.svg'); ?>" alt="Twitter" class="footer-social-icon twitter-icon"></a>
+                    <a href="#"><img src="<?php echo get_theme_file_uri('assets/images/common/tiktok-brands.svg'); ?>" alt="TikTok" class="footer-social-icon tiktok-icon"></a>
                 </div>
             </div>
             <div>
                 <h3 class="footer-title">メニュー</h3>
                 <ul class="footer-links">
-                    <li><a href="#">ホーム</a></li>
-                    <li><a href="#">AIツール一覧</a></li>
-                    <li><a href="#">カテゴリ</a></li>
-                    <li><a href="#">コラム</a></li>
-                    <li><a href="#">教材</a></li>
+                    <li><a href="<?php echo home_url(); ?>" <?php if (is_front_page()) echo 'class="active"'; ?>>ホーム</a></li>
+                    <li><a href="<?php echo home_url('/#ai-tools-list'); ?>" <?php if (is_page('ai-tools')) echo 'class="active"'; ?>>AIツール</a></li>
+                    <li><a href="<?php echo home_url('/column'); ?>" <?php if (is_home()) echo 'class="active"'; ?>>コラム</a></li>
+                    <li><a href="<?php echo home_url('/about'); ?>" <?php if (is_page('about')) echo 'class="active"'; ?>>サイトについて</a></li>
+                    <li><a href="<?php echo home_url('/contact'); ?>" <?php if (is_page('contact')) echo 'class="active"'; ?>>お問い合わせ</a></li>
                 </ul>
             </div>
             <div>
@@ -63,16 +63,14 @@ if (!defined('ABSPATH')) exit; ?>
             <div>
                 <h3 class="footer-title">サポート</h3>
                 <ul class="footer-links">
-                    <li><a href="#">よくある質問</a></li>
-                    <li><a href="#">お問い合わせ</a></li>
+                    <li><a href="#">お仕事の依頼</a></li>
                     <li><a href="#">利用規約</a></li>
                     <li><a href="#">プライバシーポリシー</a></li>
-                    <li><a href="#">運営会社</a></li>
                 </ul>
             </div>
         </div>
         <div class="copyright">
-            &copy; 2025 AI×副業ポータル All Rights Reserved.
+            &copy; <?php echo date('Y'); ?> AI×副業ポータル All Rights Reserved.
         </div>
     </div>
 </footer>
