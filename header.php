@@ -959,6 +959,15 @@ if (!defined('ABSPATH')) exit; ?>
                 font-size: 12px;
             }
         }
+
+        .footer-social-icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            filter: invert(42%) sepia(14%) saturate(1847%) hue-rotate(182deg) brightness(92%) contrast(87%);
+            /* #3b6ea5の色に変更 */
+
+        }
     </style>
 </head>
 

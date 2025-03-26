@@ -14,8 +14,8 @@ get_header();
                 <h1 class="hero-title">AIで<span>副業</span>をもっと効率的に、もっと収益的に</h1>
                 <p class="hero-description">最新のAI技術で副業の効率を劇的に向上。時間を節約し、クオリティを高め、収入を最大化しましょう。</p>
                 <div class="hero-buttons">
-                    <a href="#" class="btn">AIツールを探す</a>
-                    <a href="#" class="btn btn-outline">使い方ガイド</a>
+                    <a href="<?php echo home_url('/#ai-tools-list'); ?>" class="btn">AIツールを探す</a>
+                    <a href="<?php echo home_url('/about'); ?>" class="btn btn-outline">使い方ガイド</a>
                 </div>
                 <!-- <div class="hero-stats">
                         <div class="hero-stat">
@@ -52,10 +52,12 @@ get_header();
             $categories = get_terms(array(
                 'taxonomy' => 'ai_category',
                 'hide_empty' => false,
+                'orderby' => 'name',
+                'order' => 'ASC'
             ));
 
             // 「すべて」のカテゴリアイコンを追加
-            echo '<a href="javascript:void(0)" class="category-icon-item" data-category="all">';
+            echo '<a href="javascript:void(0)" class="category-icon-item active" data-category="all">';
             echo '<div class="category-icon-box">';
             echo '<img src="' . get_theme_file_uri('assets/images/category_icon/cagegory_icon_all.svg') . '" alt="すべて">';
             echo '</div>';
@@ -68,7 +70,7 @@ get_header();
                 $image_id = get_term_meta($category->term_id, 'ai_category_image', true);
                 $icon_url = '';
 
-                if ($image_id) {
+                if ($image_id && wp_attachment_is_image($image_id)) {
                     // アイコン画像のURLを取得
                     $icon_url = wp_get_attachment_image_url($image_id, 'thumbnail');
                 } else {
@@ -76,7 +78,7 @@ get_header();
                     $icon_url = get_theme_file_uri('assets/images/category_icon/cagegory_icon1.svg');
                 }
 
-                echo '<a href="javascript:void(0)" class="category-icon-item" data-category="' . esc_attr($category->slug) . '">';
+                echo '<a href="javascript:void(0)" class="category-icon-item" data-category="' . esc_attr($category->slug) . '" data-category-id="' . esc_attr($category->term_id) . '">';
                 echo '<div class="category-icon-box">';
                 echo '<img src="' . esc_url($icon_url) . '" alt="' . esc_attr($category->name) . '">';
                 echo '</div>';
@@ -101,10 +103,13 @@ get_header();
                 <select class="tools-filter-select" id="category-filter">
                     <option value="all">すべてのカテゴリ</option>
                     <?php
+                    // カテゴリを取得
                     $categories = get_terms(array(
                         'taxonomy' => 'ai_category',
                         'hide_empty' => false,
                     ));
+
+                    // カテゴリオプションを生成
                     foreach ($categories as $category) {
                         echo '<option value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '</option>';
                     }
@@ -128,7 +133,7 @@ get_header();
             // AIツールを取得
             $args = array(
                 'post_type' => 'ai_tool',
-                'posts_per_page' => 6,
+                'posts_per_page' => 3,
                 'orderby' => 'date',
                 'order' => 'DESC'
             );
@@ -235,7 +240,7 @@ get_header();
             // 前へリンク
             if ($current_page > 1) {
                 echo '<div class="page-item">';
-                echo '<a href="' . esc_url(get_pagenum_link($current_page - 1)) . '" class="page-link page-prev">前へ</a>';
+                echo '<a href="javascript:void(0)" class="page-link page-prev" data-page="' . ($current_page - 1) . '">前へ</a>';
                 echo '</div>';
             } else {
                 echo '<div class="page-item disabled">';
@@ -249,7 +254,7 @@ get_header();
 
             if ($start_page > 1) {
                 echo '<div class="page-item">';
-                echo '<a href="' . esc_url(get_pagenum_link(1)) . '" class="page-link">1</a>';
+                echo '<a href="javascript:void(0)" class="page-link" data-page="1">1</a>';
                 echo '</div>';
 
                 if ($start_page > 2) {
@@ -266,7 +271,7 @@ get_header();
                     echo '</div>';
                 } else {
                     echo '<div class="page-item">';
-                    echo '<a href="' . esc_url(get_pagenum_link($i)) . '" class="page-link">' . $i . '</a>';
+                    echo '<a href="javascript:void(0)" class="page-link" data-page="' . $i . '">' . $i . '</a>';
                     echo '</div>';
                 }
             }
@@ -279,14 +284,14 @@ get_header();
                 }
 
                 echo '<div class="page-item">';
-                echo '<a href="' . esc_url(get_pagenum_link($total_pages)) . '" class="page-link">' . $total_pages . '</a>';
+                echo '<a href="javascript:void(0)" class="page-link" data-page="' . $total_pages . '">' . $total_pages . '</a>';
                 echo '</div>';
             }
 
             // 次へリンク
             if ($current_page < $total_pages) {
                 echo '<div class="page-item">';
-                echo '<a href="' . esc_url(get_pagenum_link($current_page + 1)) . '" class="page-link page-next">次へ</a>';
+                echo '<a href="javascript:void(0)" class="page-link page-next" data-page="' . ($current_page + 1) . '">次へ</a>';
                 echo '</div>';
             } else {
                 echo '<div class="page-item disabled">';
@@ -449,6 +454,7 @@ get_header();
                 e.preventDefault();
                 var page = $(this).data('page');
                 if (page) {
+                    console.log('ページネーションクリック: ページ ' + page);
                     filterAndSortTools(page);
                 }
             });
