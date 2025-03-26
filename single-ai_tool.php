@@ -1529,6 +1529,11 @@ if (!is_array($gallery_images)) {
         transform: translateX(3px);
     }
 
+    .plan-footer {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
     /* レスポンシブ対応 */
     @media (max-width: 1024px) {
         .product-layout {
@@ -1827,7 +1832,7 @@ if (!is_array($gallery_images)) {
                             <div class="pricing-tabs">
                                 <?php foreach ($pricing_plans as $index => $tab) : ?>
                                     <div class="pricing-tab <?php echo $index === 0 ? 'active' : ''; ?>" data-plan="<?php echo esc_attr($tab['id'] ?? 'plan-' . $index); ?>">
-                                        <?php echo esc_html($tab['title']); ?>
+                                        <?php echo esc_html($tab['tab_name']); ?>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -1887,6 +1892,7 @@ if (!is_array($gallery_images)) {
                     </div>
                 </div>
             <?php endif; ?>
+
 
             <!-- 関連コラムタブ -->
             <div class="tab-content" id="articles">
