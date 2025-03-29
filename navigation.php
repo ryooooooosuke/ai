@@ -1,7 +1,7 @@
 <header>
     <div class="container">
         <div class="navbar">
-            <a href="<?php echo home_url(); ?>" class="logo">AI<span>×</span>副業アカデミー</a>
+            <h1><a href="<?php echo home_url(); ?>" class="logo"><span>AIツール</span>アカデミー</a></h1>
 
             <!-- ハンバーガーメニューのボタン（スマホのみ表示） -->
             <div class="hamburger-menu">
@@ -31,7 +31,7 @@
     <div class="modal-nav">
         <div class="modal-nav-content">
             <div class="modal-nav-header">
-                <a href="<?php echo home_url(); ?>" class="logo">AI<span>×</span>副業アカデミー</a>
+                <a href="<?php echo home_url(); ?>" class="logo">AIツール<span>×</span>アカデミー</a>
                 <div class="modal-close">
                     <span></span>
                     <span></span>

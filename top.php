@@ -11,26 +11,26 @@ get_header();
     <div class="container">
         <div class="hero-container">
             <div class="hero-content">
-                <h1 class="hero-title">AIで<span>副業</span>をもっと効率的に、もっと収益的に</h1>
-                <p class="hero-description">最新のAI技術で副業の効率を劇的に向上。時間を節約し、クオリティを高め、収入を最大化しましょう。</p>
+                <h2 class="hero-title"><span>理想のAIツール</span>に出会えるプラットフォーム</h2>
+                <p class="hero-description">今すぐ使える業種別の最適なAIツールを厳選紹介。あなたにピッタリのAIツールを探してみましょう。</p>
                 <div class="hero-buttons">
                     <a href="<?php echo home_url('/#ai-tools-list'); ?>" class="btn">AIツールを探す</a>
-                    <a href="<?php echo home_url('/about'); ?>" class="btn btn-outline">使い方ガイド</a>
+                    <a href="<?php echo home_url('/about'); ?>" class="btn btn-outline">当サイトについて</a>
                 </div>
                 <!-- <div class="hero-stats">
-                        <div class="hero-stat">
-                            <div class="hero-stat-number">250+</div>
-                            <div class="hero-stat-label">厳選AIツール</div>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-number">20,000+</div>
-                            <div class="hero-stat-label">ユーザー</div>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-number">40+</div>
-                            <div class="hero-stat-label">専門教材</div>
-                        </div>
-                    </div> -->
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">250+</div>
+                        <div class="hero-stat-label">厳選AIツール</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">20,000+</div>
+                        <div class="hero-stat-label">ユーザー</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number">40+</div>
+                        <div class="hero-stat-label">専門教材</div>
+                    </div>
+                </div> -->
             </div>
             <div class="hero-image">
                 <img src="<?php echo get_theme_file_uri('assets/images/common/header-img2.png'); ?>" alt="AI副業">
@@ -43,7 +43,7 @@ get_header();
 <!-- カテゴリセクション -->
 <section class="section">
     <div class="container">
-        <h2 class="section-title">副業カテゴリから探す</h2>
+        <h2 class="section-title">業種から探す</h2>
         <p class="section-subtitle">あなたの副業スタイルに合わせた最適なAIツールをカテゴリから見つけることができます</p>
 
         <div class="category-nav">
@@ -93,7 +93,7 @@ get_header();
 <!-- AIツール一覧セクション -->
 <section class="ai-tools" id="ai-tools-list">
     <div class="container">
-        <h2 class="section-title">生成AI一覧</h2>
+        <h2 class="section-title">AIツール一覧</h2>
         <p class="section-subtitle">副業に役立つ厳選された生成AIツールを紹介。作業効率を高め、クオリティを向上させよう</p>
 
         <div class="tools-header">
