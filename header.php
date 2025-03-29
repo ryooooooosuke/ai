@@ -421,6 +421,7 @@ if (!defined('ABSPATH')) exit; ?>
         .tools-filter-label {
             font-weight: 600;
             color: var(--text);
+            margin-left: 3px;
         }
 
         .tools-filter-select {
@@ -445,6 +446,10 @@ if (!defined('ABSPATH')) exit; ?>
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid var(--border);
+        }
+
+        .tools-filter-detail {
+            margin-right: 10px;
         }
 
         .search-input {
@@ -789,6 +794,109 @@ if (!defined('ABSPATH')) exit; ?>
             justify-content: center;
         }
 
+        /* 業種セクションのスタイル */
+        .industry-container {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: space-between;
+            overflow-x: hidden;
+            margin-top: 25px;
+            position: relative;
+        }
+
+        .show-all-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .show-more {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .show-more-button {
+            background-color: #4a8eff;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .show-more-button:hover {
+            background-color: #3a7eef;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* テキストカテゴリのコンテナ */
+        .text-category-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        /* 業種カテゴリ用スタイル - 画像あり */
+        .image-category-item {
+            background: white;
+            border: 1px solid #e1e4e8;
+            border-radius: 10px;
+            padding: 15px;
+            width: 120px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .image-category-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .image-category-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        /* 機能・目的カテゴリ用スタイル - テキストのみ */
+        .text-category-item {
+            background: white;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin: 3px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .text-category-item:hover {
+            background-color: #f0f5ff;
+            border-color: #4a8eff;
+        }
+
+        .image-category-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .text-category-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
         /* レスポンシブ対応 */
         @media (max-width: 991px) {
             .hero-container {
@@ -804,6 +912,8 @@ if (!defined('ABSPATH')) exit; ?>
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+
 
         @media (max-width: 768px) {
             .nav-menu {

@@ -4,7 +4,72 @@ if (!defined('ABSPATH')) exit;
 //子テーマ用のビジュアルエディタースタイルを適用
 add_editor_style();
 
-//以下に子テーマ用の関数を書く
+/**
+ * AIツールの機能カテゴリを登録
+ */
+function create_ai_feature_taxonomy()
+{
+    $labels = array(
+        'name'              => 'AI機能',
+        'singular_name'     => 'AI機能',
+        'search_items'      => 'AI機能を検索',
+        'all_items'         => 'すべてのAI機能',
+        'parent_item'       => '親AI機能',
+        'parent_item_colon' => '親AI機能:',
+        'edit_item'         => 'AI機能を編集',
+        'update_item'       => 'AI機能を更新',
+        'add_new_item'      => '新規AI機能を追加',
+        'new_item_name'     => '新規AI機能名',
+        'menu_name'         => 'AI機能',
+    );
+
+    $args = array(
+        'hierarchical'      => true,
+        'labels'            => $labels,
+        'show_ui'           => true,
+        'show_admin_column' => true,
+        'query_var'         => true,
+        'rewrite'           => array('slug' => 'ai-feature'),
+        'show_in_rest'      => true, // Gutenberg対応
+    );
+
+    register_taxonomy('ai_feature', array('ai_tool'), $args);
+}
+add_action('init', 'create_ai_feature_taxonomy');
+
+/**
+ * AIツールの目的カテゴリを登録
+ */
+function create_ai_purpose_taxonomy()
+{
+    $labels = array(
+        'name'              => 'AI目的',
+        'singular_name'     => 'AI目的',
+        'search_items'      => 'AI目的を検索',
+        'all_items'         => 'すべてのAI目的',
+        'parent_item'       => '親AI目的',
+        'parent_item_colon' => '親AI目的:',
+        'edit_item'         => 'AI目的を編集',
+        'update_item'       => 'AI目的を更新',
+        'add_new_item'      => '新規AI目的を追加',
+        'new_item_name'     => '新規AI目的名',
+        'menu_name'         => 'AI目的',
+    );
+
+    $args = array(
+        'hierarchical'      => true,
+        'labels'            => $labels,
+        'show_ui'           => true,
+        'show_admin_column' => true,
+        'query_var'         => true,
+        'rewrite'           => array('slug' => 'ai-purpose'),
+        'show_in_rest'      => true, // Gutenberg対応
+    );
+
+    register_taxonomy('ai_purpose', array('ai_tool'), $args);
+}
+add_action('init', 'create_ai_purpose_taxonomy');
+
 
 // AIツールのカスタム投稿タイプを登録
 function create_ai_tools_post_type()
@@ -1796,7 +1861,7 @@ function filter_ai_tools_ajax()
     // クエリ引数の準備
     $args = array(
         'post_type' => 'ai_tool',
-        'posts_per_page' => 6,
+        'posts_per_page' => 3,
         'paged' => $paged
     );
 
@@ -2256,3 +2321,159 @@ function save_ai_tools_features($post_id)
     }
 }
 add_action('save_post', 'save_ai_tools_features');
+
+
+/**
+ * 会員登録用のAjaxハンドラー
+ */
+function user_registration_ajax_handler()
+{
+    // セキュリティチェック
+    check_ajax_referer('user_registration_nonce', 'security');
+
+    $response = array(
+        'success' => false,
+        'message' => '',
+    );
+
+    // 必須フィールドの検証
+    $required_fields = array('nickname', 'email', 'password');
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $response['message'] = '必須項目が入力されていません。';
+            wp_send_json($response);
+            return;
+        }
+    }
+
+    // メールアドレスの検証
+    $email = sanitize_email($_POST['email']);
+    if (!is_email($email)) {
+        $response['message'] = '有効なメールアドレスを入力してください。';
+        wp_send_json($response);
+        return;
+    }
+
+    // メールアドレスの重複チェック
+    if (email_exists($email)) {
+        $response['message'] = 'このメールアドレスは既に登録されています。';
+        wp_send_json($response);
+        return;
+    }
+
+    // ユーザー名の生成（メールアドレスのユーザー名部分を使用）
+    $username = sanitize_user(current(explode('@', $email)), true);
+
+    // ユーザー名の重複チェックと調整
+    $original_username = $username;
+    $counter = 1;
+    while (username_exists($username)) {
+        $username = $original_username . $counter;
+        $counter++;
+    }
+
+    // パスワードの検証
+    $password = $_POST['password'];
+    if (strlen($password) < 8) {
+        $response['message'] = 'パスワードは8文字以上である必要があります。';
+        wp_send_json($response);
+        return;
+    }
+
+    // ニックネーム
+    $nickname = sanitize_text_field($_POST['nickname']);
+
+    // カテゴリの取得
+    $categories = isset($_POST['categories']) ? $_POST['categories'] : array();
+    $sanitized_categories = array_map('sanitize_text_field', $categories);
+
+    // メール配信設定
+    $mail_ai_news = isset($_POST['mail_ai_news']) ? true : false;
+
+    // ユーザー作成
+    $user_id = wp_create_user($username, $password, $email);
+
+    if (is_wp_error($user_id)) {
+        $response['message'] = $user_id->get_error_message();
+        wp_send_json($response);
+        return;
+    }
+
+    // ユーザーメタデータの設定
+    wp_update_user(array(
+        'ID' => $user_id,
+        'display_name' => $nickname,
+        'nickname' => $nickname
+    ));
+
+    // カスタムユーザーメタデータの保存
+    update_user_meta($user_id, 'interested_categories', $sanitized_categories);
+    update_user_meta($user_id, 'mail_ai_news', $mail_ai_news);
+
+    // 登録日時を保存
+    update_user_meta($user_id, 'registration_date', current_time('mysql'));
+
+    // 確認メールの送信
+    $activation_key = wp_generate_password(20, false);
+    update_user_meta($user_id, 'account_activation_key', $activation_key);
+
+    $activation_link = add_query_arg(
+        array(
+            'action' => 'activate',
+            'key' => $activation_key,
+            'user' => $user_id
+        ),
+        home_url()
+    );
+
+    $subject = get_bloginfo('name') . ' - アカウント確認';
+    $message = $nickname . " 様\n\n";
+    $message .= "AI×副業ポータルへのご登録ありがとうございます。\n\n";
+    $message .= "アカウントを有効化するには、以下のリンクをクリックしてください：\n\n";
+    $message .= $activation_link . "\n\n";
+    $message .= "このリンクは24時間有効です。\n\n";
+    $message .= "このメールに心当たりがない場合は、このメールを無視してください。\n\n";
+    $message .= "AI×副業ポータル運営チーム";
+
+    wp_mail($email, $subject, $message);
+
+    // 成功レスポンス
+    $response['success'] = true;
+    $response['message'] = '登録が完了しました。確認メールをご確認ください。';
+    $response['redirect'] = add_query_arg('step', 'verification', get_permalink());
+
+    wp_send_json($response);
+}
+add_action('wp_ajax_nopriv_user_registration', 'user_registration_ajax_handler');
+
+/**
+ * アカウント有効化処理
+ */
+function handle_account_activation()
+{
+    if (isset($_GET['action']) && $_GET['action'] === 'activate' && isset($_GET['key']) && isset($_GET['user'])) {
+        $user_id = intval($_GET['user']);
+        $key = $_GET['key'];
+
+        $stored_key = get_user_meta($user_id, 'account_activation_key', true);
+
+        if ($stored_key && $stored_key === $key) {
+            // アカウントを有効化
+            update_user_meta($user_id, 'account_activated', true);
+            delete_user_meta($user_id, 'account_activation_key');
+
+            // ユーザーロールを設定（デフォルトは「購読者」）
+            $user = new WP_User($user_id);
+            $user->set_role('subscriber');
+
+            // 有効化完了ページにリダイレクト
+            wp_redirect(add_query_arg('activation', 'success', home_url('/signup/')));
+            exit;
+        } else {
+            // 無効なキーの場合
+            wp_redirect(add_query_arg('activation', 'failed', home_url('/signup/')));
+            exit;
+        }
+    }
+}
+add_action('template_redirect', 'handle_account_activation');

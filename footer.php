@@ -12,14 +12,14 @@ if (!defined('ABSPATH')) exit; ?>
 <section class="cta-section">
     <div class="container">
         <div class="cta-container">
-            <h2 class="cta-title">AI時代の副業で<span>収入の柱</span>を作りませんか？</h2>
+            <h2 class="cta-title">AIを活用した<span>ウェブ開発</span>や<span>広告掲載</span>の<br>ご依頼はお気軽に！</h2>
             <p class="cta-description">
-                AI×副業ポータルでは、最新のAIツールと活用法を学べます。<br>
-                あなたの副業をもっと効率的に、もっと収益的にするためのノウハウを無料で公開中！
+                ホームページ制作、AIツール開発、コンテンツ制作に加え、当サイトへの広告掲載も可能。<br>
+                最新のAI技術で、あなたのビジネスの認知拡大から成果向上までトータルサポートします。
             </p>
             <div class="cta-buttons">
-                <a href="#" class="btn">無料会員登録する</a>
-                <a href="#" class="btn btn-outline">もっと詳しく</a>
+                <a href="<?php echo home_url('/contact'); ?>" class="btn">お仕事を依頼する</a>
+                <a href="<?php echo home_url('/about'); ?>" class="btn btn-outline">当サイトについて</a>
             </div>
         </div>
     </div>
