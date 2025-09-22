@@ -30,6 +30,7 @@ if (!$thumbnail_url) {
 
 // 料金プランを取得
 $pricing_plans = get_post_meta(get_the_ID(), '_pricing_plans', true);
+
 $has_free_plan = false;
 if ($pricing_plans && is_array($pricing_plans)) {
     foreach ($pricing_plans as $tab) {
@@ -1668,11 +1669,7 @@ if (!is_array($gallery_images)) {
     <div class="breadcrumb">
         <a href="<?php echo home_url(); ?>">ホーム</a>
         <span class="breadcrumb-separator">/</span>
-        <a href="<?php echo get_post_type_archive_link('ai_tool'); ?>">AIツール</a>
-        <?php if ($categories && !is_wp_error($categories)) : ?>
-            <span class="breadcrumb-separator">/</span>
-            <a href="<?php echo get_term_link($categories[0]); ?>"><?php echo esc_html($categories[0]->name); ?></a>
-        <?php endif; ?>
+        <a href="<?php echo home_url('/#ai-tools-list'); ?>">AIツール</a>
         <span class="breadcrumb-separator">/</span>
         <span><?php the_title(); ?></span>
     </div>
@@ -1827,7 +1824,6 @@ if (!is_array($gallery_images)) {
                 <div class="tab-content" id="pricing">
                     <div class="tab-section">
                         <h3 class="tab-section-title">料金プラン</h3>
-
                         <?php if (count($pricing_plans) > 1) : ?>
                             <div class="pricing-tabs">
                                 <?php foreach ($pricing_plans as $index => $tab) : ?>
@@ -1848,7 +1844,6 @@ if (!is_array($gallery_images)) {
                                 </div>
                             <?php endif; ?>
                         <?php endif; ?>
-
                         <div class="pricing-plans">
                             <?php foreach ($pricing_plans as $index => $tab) : ?>
                                 <?php if (isset($tab['details']) && is_array($tab['details'])) : ?>

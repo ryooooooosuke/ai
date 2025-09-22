@@ -2477,3 +2477,29 @@ function handle_account_activation()
     }
 }
 add_action('template_redirect', 'handle_account_activation');
+
+/**
+ * フロントエンド用スクリプトの読み込みとAjax設定
+ */
+function enqueue_filter_scripts()
+{
+    // メインのフィルタースクリプトを登録（既存のスクリプトがある場合はそのパスに修正）
+    wp_enqueue_script(
+        'filter-scripts',
+        get_stylesheet_directory_uri() . '/assets/js/filter-scripts.js',
+        array('jquery'),
+        '1.0.0',
+        true
+    );
+
+    // Ajax用のオブジェクトをJavaScriptに渡す
+    wp_localize_script(
+        'filter-scripts',
+        'ajax_object',
+        array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('filter_ai_tools_nonce')
+        )
+    );
+}
+add_action('wp_enqueue_scripts', 'enqueue_filter_scripts');

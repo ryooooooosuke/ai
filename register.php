@@ -3,7 +3,11 @@
 /**
  * Template Name: 会員登録
  */
-get_header(); ?>
+get_header();
+// 現在のステップを取得
+$current_step = isset($_GET['step']) ? $_GET['step'] : 'registration';
+$activation_status = isset($_GET['activation']) ? $_GET['activation'] : '';
+?>
 
 
 <style>
@@ -354,9 +358,8 @@ get_header(); ?>
 
     /* ボタン */
     .form-buttons {
-        display: flex;
-        justify-content: space-between;
         margin-top: 40px;
+        text-align: center;
     }
 
     .submit-btn {
@@ -450,15 +453,15 @@ get_header(); ?>
 
             <!-- 登録ステップ -->
             <div class="signup-steps">
-                <div class="step-item active">
+                <div class="step-item <?php echo ($current_step === 'registration') ? 'active' : (($current_step === 'verification' || $current_step === 'complete') ? 'completed' : ''); ?>">
                     <div class="step-circle">1</div>
                     <div class="step-label">会員情報入力</div>
                 </div>
-                <div class="step-item">
+                <div class="step-item <?php echo ($current_step === 'verification') ? 'active' : (($current_step === 'complete') ? 'completed' : ''); ?>">
                     <div class="step-circle">2</div>
                     <div class="step-label">メール認証</div>
                 </div>
-                <div class="step-item">
+                <div class="step-item <?php echo ($current_step === 'complete') ? 'active' : ''; ?>">
                     <div class="step-circle">3</div>
                     <div class="step-label">登録完了</div>
                 </div>
@@ -466,159 +469,198 @@ get_header(); ?>
 
             <!-- 登録フォーム -->
             <div class="signup-form-container">
-                <form id="signupForm">
-                    <!-- 基本情報セクション -->
-                    <div class="form-section">
-                        <h3 class="form-section-title">基本情報</h3>
+                <?php if ($current_step === 'registration'): ?>
+                    <form id="signupForm">
+                        <?php wp_nonce_field('user_registration_nonce', 'security'); ?>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="nickname" class="form-label">ニックネーム<span class="required-label">*</span></label>
-                                <input type="text" id="nickname" class="form-control" placeholder="例：AIマスター" required>
-                                <p class="form-hint">サイト内で表示される名前です</p>
-                            </div>
-                        </div>
+                        <!-- 基本情報セクション -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">基本情報</h3>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="email" class="form-label">メールアドレス<span class="required-label">*</span></label>
-                                <input type="email" id="email" class="form-control" placeholder="例：example@email.com" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="password" class="form-label">パスワード<span class="required-label">*</span></label>
-                                <input type="password" id="password" class="form-control" placeholder="8文字以上の英数字" required>
-                                <div class="password-strength">
-                                    <div class="password-strength-meter strength-medium"></div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="nickname" class="form-label">ニックネーム<span class="required-label">*</span></label>
+                                    <input type="text" id="nickname" name="nickname" class="form-control" placeholder="例：AIマスター" required>
+                                    <p class="form-hint">サイト内で表示される名前です</p>
                                 </div>
-                                <div class="password-strength-text">パスワード強度：中</div>
-                                <p class="form-hint">8文字以上で、英字・数字を含めてください</p>
-                            </div>
-                            <div class="form-group">
-                                <label for="confirmPassword" class="form-label">パスワード（確認）<span class="required-label">*</span></label>
-                                <input type="password" id="confirmPassword" class="form-control" placeholder="パスワードを再入力" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 興味のあるカテゴリセクション -->
-                    <div class="form-section">
-                        <h3 class="form-section-title">興味のある副業カテゴリ（複数選択可）</h3>
-                        <p class="form-hint">あなたの興味に合わせたAIツールや情報をおすすめします</p>
-
-                        <div class="category-grid">
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-writing" name="categories[]" value="writing" class="category-input">
-                                <label for="cat-writing" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-pen-nib"></i></div>
-                                    <div class="category-name">ライティング</div>
-                                </label>
                             </div>
 
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-programming" name="categories[]" value="programming" class="category-input">
-                                <label for="cat-programming" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-code"></i></div>
-                                    <div class="category-name">プログラミング</div>
-                                </label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="email" class="form-label">メールアドレス<span class="required-label">*</span></label>
+                                    <input type="email" id="email" name="email" class="form-control" placeholder="例：example@email.com" required>
+                                </div>
                             </div>
 
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-design" name="categories[]" value="design" class="category-input">
-                                <label for="cat-design" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-palette"></i></div>
-                                    <div class="category-name">デザイン</div>
-                                </label>
-                            </div>
-
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-video" name="categories[]" value="video" class="category-input">
-                                <label for="cat-video" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-video"></i></div>
-                                    <div class="category-name">動画編集</div>
-                                </label>
-                            </div>
-
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-marketing" name="categories[]" value="marketing" class="category-input">
-                                <label for="cat-marketing" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-bullhorn"></i></div>
-                                    <div class="category-name">マーケティング</div>
-                                </label>
-                            </div>
-
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-photo" name="categories[]" value="photo" class="category-input">
-                                <label for="cat-photo" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-camera"></i></div>
-                                    <div class="category-name">写真撮影</div>
-                                </label>
-                            </div>
-
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-translation" name="categories[]" value="translation" class="category-input">
-                                <label for="cat-translation" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-language"></i></div>
-                                    <div class="category-name">翻訳</div>
-                                </label>
-                            </div>
-
-                            <div class="category-item">
-                                <input type="checkbox" id="cat-consult" name="categories[]" value="consult" class="category-input">
-                                <label for="cat-consult" class="category-label">
-                                    <div class="category-icon"><i class="fas fa-comments"></i></div>
-                                    <div class="category-name">コンサルティング</div>
-                                </label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="password" class="form-label">パスワード<span class="required-label">*</span></label>
+                                    <input type="password" id="password" name="password" class="form-control" placeholder="8文字以上の英数字" required>
+                                    <div class="password-strength">
+                                        <div class="password-strength-meter strength-medium"></div>
+                                    </div>
+                                    <div class="password-strength-text">パスワード強度：中</div>
+                                    <p class="form-hint">8文字以上で、英字・数字を含めてください</p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword" class="form-label">パスワード（確認）<span class="required-label">*</span></label>
+                                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="パスワードを再入力" required>
+                                </div>
                             </div>
                         </div>
+
+                        <!-- 興味のあるカテゴリセクション -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">興味のある副業カテゴリ（複数選択可）</h3>
+                            <p class="form-hint">あなたの興味に合わせたAIツールや情報をおすすめします</p>
+
+                            <div class="category-grid">
+                                <?php
+                                // AIカテゴリタクソノミーから全てのタームを取得
+                                $ai_categories = get_terms(array(
+                                    'taxonomy' => 'ai_category',
+                                    'hide_empty' => false,
+                                ));
+
+                                // カテゴリが存在する場合は表示
+                                if (!empty($ai_categories) && !is_wp_error($ai_categories)) {
+                                    foreach ($ai_categories as $category) {
+                                        // カテゴリのアイコン（カスタムフィールドから取得するか、デフォルトアイコンを使用）
+                                        $icon_class = get_term_meta($category->term_id, 'category_icon', true);
+                                        if (empty($icon_class)) {
+                                            $icon_class = 'fas fa-robot'; // デフォルトアイコン
+                                        }
+                                ?>
+                                        <div class="category-item">
+                                            <input type="checkbox" id="cat-<?php echo esc_attr($category->slug); ?>"
+                                                name="categories[]" value="<?php echo esc_attr($category->slug); ?>"
+                                                class="category-input">
+                                            <label for="cat-<?php echo esc_attr($category->slug); ?>" class="category-label">
+                                                <div class="category-icon"><i class="<?php echo esc_attr($icon_class); ?>"></i></div>
+                                                <div class="category-name"><?php echo esc_html($category->name); ?></div>
+                                            </label>
+                                        </div>
+                                    <?php
+                                    }
+                                } else {
+                                    // カテゴリが存在しない場合は、デフォルトのカテゴリを表示
+                                    $default_categories = array(
+                                        'writing' => array('name' => 'ライティング', 'icon' => 'fas fa-pen-nib'),
+                                        'programming' => array('name' => 'プログラミング', 'icon' => 'fas fa-code'),
+                                        'design' => array('name' => 'デザイン', 'icon' => 'fas fa-palette'),
+                                        'video' => array('name' => '動画編集', 'icon' => 'fas fa-video'),
+                                        'marketing' => array('name' => 'マーケティング', 'icon' => 'fas fa-bullhorn'),
+                                        'photo' => array('name' => '写真撮影', 'icon' => 'fas fa-camera'),
+                                        'translation' => array('name' => '翻訳', 'icon' => 'fas fa-language'),
+                                        'consult' => array('name' => 'コンサルティング', 'icon' => 'fas fa-comments')
+                                    );
+
+                                    foreach ($default_categories as $slug => $category) {
+                                    ?>
+                                        <div class="category-item">
+                                            <input type="checkbox" id="cat-<?php echo esc_attr($slug); ?>"
+                                                name="categories[]" value="<?php echo esc_attr($slug); ?>"
+                                                class="category-input">
+                                            <label for="cat-<?php echo esc_attr($slug); ?>" class="category-label">
+                                                <div class="category-icon"><i class="<?php echo esc_attr($category['icon']); ?>"></i></div>
+                                                <div class="category-name"><?php echo esc_html($category['name']); ?></div>
+                                            </label>
+                                        </div>
+                                <?php
+                                    }
+                                }
+                                ?>
+                            </div>
+                        </div>
+
+                        <!-- メール配信設定 -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">メール配信設定</h3>
+
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="mail_ai_news" name="mail_ai_news" class="checkbox-input" checked>
+                                <label for="mail_ai_news" class="checkbox-label">
+                                    最新のAIニュースやトレンドに関するメールを受け取る
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 利用規約同意 -->
+                        <div class="agreement-container">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="terms_agreement" name="terms_agreement" class="checkbox-input" required>
+                                <label for="terms_agreement" class="checkbox-label">
+                                    <a href="<?php echo home_url('/terms/'); ?>" target="_blank">利用規約</a>および<a href="<?php echo home_url('/privacy-policy/'); ?>" target="_blank">プライバシーポリシー</a>に同意します。
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- エラーメッセージ表示エリア -->
+                        <div id="registration-message" class="message-container" style="display: none;"></div>
+
+                        <!-- ボタン -->
+                        <div class="form-buttons">
+                            <button type="submit" class="btn submit-btn">登録する</button>
+                        </div>
+
+                        <div class="already-account">
+                            すでにアカウントをお持ちの方は<a href="<?php echo wp_login_url(); ?>">こちらからログイン</a>
+                        </div>
+                    </form>
+
+                    <!-- Googleアカウントでの登録 -->
+                    <!-- <div class="social-signup">
+                        <div class="google-signup">
+                            <a href="#" class="btn btn-google">
+                                <i class="fab fa-google"></i> Googleアカウントで登録
+                            </a>
+                        </div>
+                    </div> -->
+
+                <?php elseif ($current_step === 'verification'): ?>
+                    <!-- メール認証ステップ -->
+                    <div class="verification-content">
+                        <div class="verification-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <h3>メール認証を行ってください</h3>
+                        <p>ご登録いただいたメールアドレスに認証メールを送信しました。メール内のリンクをクリックして、アカウントを有効化してください。</p>
+                        <p class="verification-note">※メールが届かない場合は、迷惑メールフォルダをご確認いただくか、別のメールアドレスで再度登録をお試しください。</p>
                     </div>
-
-                    <!-- メール配信設定 -->
-                    <div class="form-section">
-                        <h3 class="form-section-title">メール配信設定</h3>
-
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="mail_ai_news" name="mail_ai_news" class="checkbox-input" checked>
-                            <label for="mail_ai_news" class="checkbox-label">
-                                最新のAIニュースやトレンドに関するメールを受け取る
-                            </label>
+                <?php elseif ($current_step === 'complete' || $activation_status === 'success'): ?>
+                    <!-- 登録完了ステップ -->
+                    <div class="complete-content">
+                        <div class="complete-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3>会員登録が完了しました！</h3>
+                        <p>AI×副業ポータルへようこそ！</p>
+                        <p>あなたの興味に合わせたAIツールや副業情報をお届けします。</p>
+                        <div class="complete-buttons">
+                            <a href="<?php echo home_url(); ?>" class="btn">ホームへ戻る</a>
+                            <a href="<?php echo wp_login_url(); ?>" class="btn btn-primary">ログインする</a>
                         </div>
                     </div>
-
-                    <!-- 利用規約同意 -->
-                    <div class="agreement-container">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="terms_agreement" name="terms_agreement" class="checkbox-input" required>
-                            <label for="terms_agreement" class="checkbox-label">
-                                <a href="#" target="_blank">利用規約</a>および<a href="#" target="_blank">プライバシーポリシー</a>に同意します。
-                            </label>
+                <?php elseif ($activation_status === 'failed'): ?>
+                    <!-- 認証失敗 -->
+                    <div class="failed-content">
+                        <div class="failed-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <h3>アカウント認証に失敗しました</h3>
+                        <p>認証リンクが無効か期限切れです。</p>
+                        <p>もう一度登録を行うか、サポートにお問い合わせください。</p>
+                        <div class="failed-buttons">
+                            <a href="<?php echo home_url('/signup/'); ?>" class="btn btn-primary">再度登録する</a>
+                            <a href="<?php echo home_url('/contact/'); ?>" class="btn">お問い合わせ</a>
                         </div>
                     </div>
-
-                    <!-- ボタン -->
-                    <div class="form-buttons">
-                        <button type="submit" class="btn submit-btn">登録する</button>
-                    </div>
-
-                    <div class="already-account">
-                        すでにアカウントをお持ちの方は<a href="#">こちらからログイン</a>
-                    </div>
-                </form>
-
-                <!-- Googleアカウントでの登録 -->
-                <div class="social-signup">
-                    <div class="google-signup">
-                        <a href="#" class="btn btn-google">
-                            <i class="fab fa-google"></i> Googleアカウントで登録
-                        </a>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </section>
+
 <!-- JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -626,54 +668,124 @@ get_header(); ?>
         const passwordInput = document.getElementById('password');
         const strengthMeter = document.querySelector('.password-strength-meter');
         const strengthText = document.querySelector('.password-strength-text');
+        var ajaxurl = "<?php echo admin_url('admin-ajax.php'); ?>";
 
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            let strength = 0;
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
 
-            if (password.length >= 8) strength += 1;
-            if (password.match(/[A-Z]/)) strength += 1;
-            if (password.match(/[0-9]/)) strength += 1;
-            if (password.match(/[^A-Za-z0-9]/)) strength += 1;
+                if (password.length >= 8) strength += 1;
+                if (password.match(/[A-Z]/)) strength += 1;
+                if (password.match(/[0-9]/)) strength += 1;
+                if (password.match(/[^A-Za-z0-9]/)) strength += 1;
 
-            strengthMeter.className = 'password-strength-meter';
+                strengthMeter.className = 'password-strength-meter';
 
-            if (strength <= 1) {
-                strengthMeter.classList.add('strength-weak');
-                strengthText.textContent = 'パスワード強度：弱';
-            } else if (strength <= 3) {
-                strengthMeter.classList.add('strength-medium');
-                strengthText.textContent = 'パスワード強度：中';
-            } else {
-                strengthMeter.classList.add('strength-strong');
-                strengthText.textContent = 'パスワード強度：強';
-            }
-        });
+                if (strength <= 1) {
+                    strengthMeter.classList.add('strength-weak');
+                    strengthText.textContent = 'パスワード強度：弱';
+                } else if (strength <= 3) {
+                    strengthMeter.classList.add('strength-medium');
+                    strengthText.textContent = 'パスワード強度：中';
+                } else {
+                    strengthMeter.classList.add('strength-strong');
+                    strengthText.textContent = 'パスワード強度：強';
+                }
+            });
+        }
 
         // フォーム送信
         const signupForm = document.getElementById('signupForm');
 
-        signupForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        if (signupForm) {
+            // メッセージコンテナを作成
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+            messageContainer.style.display = 'none';
+            signupForm.prepend(messageContainer);
 
-            // バリデーションとフォーム送信処理
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            signupForm.addEventListener('submit', function(e) {
+                e.preventDefault();
 
-            if (password !== confirmPassword) {
-                alert('パスワードと確認用パスワードが一致しません');
-                return false;
-            }
+                // メッセージをリセット
+                messageContainer.innerHTML = '';
+                messageContainer.style.display = 'none';
 
-            // フォーム送信処理（実際はAjaxなどで処理）
-            alert('登録フォームを送信しました。確認メールをご確認ください。');
+                // バリデーション
+                const nickname = document.getElementById('nickname').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const termsAgreement = document.getElementById('terms_agreement');
 
-            // 次のステップへの遷移（実際はサーバーレスポンス後に行う）
-            const steps = document.querySelectorAll('.step-item');
-            steps[0].classList.remove('active');
-            steps[0].classList.add('completed');
-            steps[1].classList.add('active');
-        });
+                // 基本的なバリデーション
+                if (!nickname || !email || !password || !confirmPassword) {
+                    messageContainer.innerHTML = '<div class="error-message">すべての必須項目を入力してください。</div>';
+                    messageContainer.style.display = 'block';
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    messageContainer.innerHTML = '<div class="error-message">パスワードと確認用パスワードが一致しません。</div>';
+                    messageContainer.style.display = 'block';
+                    return;
+                }
+
+                if (password.length < 8) {
+                    messageContainer.innerHTML = '<div class="error-message">パスワードは8文字以上である必要があります。</div>';
+                    messageContainer.style.display = 'block';
+                    return;
+                }
+
+                if (termsAgreement && !termsAgreement.checked) {
+                    messageContainer.innerHTML = '<div class="error-message">利用規約とプライバシーポリシーに同意する必要があります。</div>';
+                    messageContainer.style.display = 'block';
+                    return;
+                }
+
+                // FormDataオブジェクトの作成
+                const formData = new FormData(signupForm);
+                formData.append('action', 'user_registration'); // WordPress AJAXアクション名
+
+                // カテゴリの収集
+                const selectedCategories = [];
+                document.querySelectorAll('input[name="categories[]"]:checked').forEach(function(checkbox) {
+                    selectedCategories.push(checkbox.value);
+                });
+
+                // Ajaxリクエスト
+                fetch(ajaxurl, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 成功時の処理
+                            messageContainer.innerHTML = '<div class="success-message">' + data.message + '</div>';
+                            messageContainer.style.display = 'block';
+
+                            // リダイレクト
+                            if (data.redirect) {
+                                setTimeout(function() {
+                                    window.location.href = data.redirect;
+                                }, 2000);
+                            }
+                        } else {
+                            // エラー時の処理
+                            messageContainer.innerHTML = '<div class="error-message">' + data.message + '</div>';
+                            messageContainer.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        messageContainer.innerHTML = '<div class="error-message">エラーが発生しました。後でもう一度お試しください。</div>';
+                        messageContainer.style.display = 'block';
+                    });
+            });
+        }
     });
 </script>
+
 <?php get_footer(); ?>

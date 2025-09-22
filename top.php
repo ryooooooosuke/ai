@@ -125,7 +125,11 @@ get_header();
                 </select>
             </div>
         </div>
-
+        <div class="selected-filters" id="selected-filters" style="display: none;">
+            <div class="selected-filters-title">選択中の条件：</div>
+            <div class="selected-filters-tags" id="selected-filters-tags"></div>
+            <button class="selected-filters-clear" id="clear-all-filters">すべて解除</button>
+        </div>
         <div class="top-search-box">
             <input type="text" class="search-input" placeholder="キーワードでAIツールを検索..." id="ai-tool-search">
             <button class="search-button" id="ai-tool-search-button">検索</button>
@@ -750,6 +754,80 @@ get_header();
             font-size: 11px;
         }
     }
+
+    /* 選択した詳細条件の表示エリア */
+    .selected-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        background-color: var(--bg-light);
+        border-radius: 6px;
+    }
+
+    .selected-filters-title {
+        font-size: 14px;
+        color: var(--text);
+        font-weight: 600;
+    }
+
+    .selected-filters-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .selected-filter-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        background-color: var(--main-light);
+        border: 1px solid var(--main-color);
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--main-dark);
+    }
+
+    .selected-filter-tag-remove {
+        margin-left: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        color: var(--main-color);
+    }
+
+    .selected-filter-tag-remove:hover {
+        color: var(--main-dark);
+    }
+
+    .selected-filters-clear {
+        background: none;
+        border: none;
+        color: var(--main-color);
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 8px;
+        text-decoration: underline;
+    }
+
+    .selected-filters-clear:hover {
+        color: var(--main-dark);
+    }
+
+    @media (max-width: 576px) {
+        .selected-filters {
+            padding: 8px 12px;
+        }
+
+        .selected-filters-title {
+            font-size: 12px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
 </style>
 
 
@@ -757,6 +835,12 @@ get_header();
 <?php get_footer(); ?>
 
 <script type="text/javascript">
+    // Ajax設定オブジェクトを作成（必ず最初に定義）
+    var ajax_object = {
+        ajax_url: '<?php echo admin_url('admin-ajax.php'); ?>',
+        nonce: '<?php echo wp_create_nonce('filter_ai_tools_nonce'); ?>'
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         // モーダル要素
         const filterModal = document.getElementById('filter-modal');
@@ -772,30 +856,335 @@ get_header();
         const categoryFilter = document.getElementById('category-filter');
         const sortFilter = document.getElementById('sort-filter');
         const keywordSearch = document.getElementById('ai-tool-search');
+        const searchButton = document.getElementById('ai-tool-search-button');
+
+        // 選択した条件表示用の要素
+        const selectedFiltersContainer = document.getElementById('selected-filters');
+        const selectedFiltersTags = document.getElementById('selected-filters-tags');
+        const clearAllFiltersBtn = document.getElementById('clear-all-filters');
+
+        // 現在選択されているフィルター条件を保持するオブジェクト
+        let currentFilters = {
+            categories: [],
+            features: [],
+            purposes: [],
+            keyword: '',
+            hasFree: false,
+            sort: 'newest'
+        };
+
+        // モーダルを閉じる関数
+        function closeModal() {
+            if (filterModal) {
+                filterModal.style.display = 'none';
+                document.body.style.overflow = ''; // スクロールを有効化
+            }
+        }
+
+        // 選択した条件を表示する関数
+        function updateSelectedFilters() {
+            if (!selectedFiltersContainer || !selectedFiltersTags) return;
+
+            // タグをクリア
+            selectedFiltersTags.innerHTML = '';
+
+            let hasFilters = false;
+
+            // キーワード
+            if (currentFilters.keyword && currentFilters.keyword.trim() !== '') {
+                hasFilters = true;
+                addFilterTag('keyword', currentFilters.keyword, 'キーワード: ' + currentFilters.keyword);
+            }
+
+            // 業種カテゴリ
+            if (currentFilters.categories.length > 0) {
+                hasFilters = true;
+                currentFilters.categories.forEach(category => {
+                    const categoryElement = document.querySelector(`input[name="category[]"][value="${category}"]`);
+                    const categoryName = categoryElement ? categoryElement.nextElementSibling.textContent : category;
+                    addFilterTag('category', category, '業種: ' + categoryName);
+                });
+            }
+
+            // 機能
+            if (currentFilters.features.length > 0) {
+                hasFilters = true;
+                currentFilters.features.forEach(feature => {
+                    const featureElement = document.querySelector(`input[name="feature[]"][value="${feature}"]`);
+                    const featureName = featureElement ? featureElement.nextElementSibling.textContent : feature;
+                    addFilterTag('feature', feature, '機能: ' + featureName);
+                });
+            }
+
+            // 目的
+            if (currentFilters.purposes.length > 0) {
+                hasFilters = true;
+                currentFilters.purposes.forEach(purpose => {
+                    const purposeElement = document.querySelector(`input[name="purpose[]"][value="${purpose}"]`);
+                    const purposeName = purposeElement ? purposeElement.nextElementSibling.textContent : purpose;
+                    addFilterTag('purpose', purpose, '目的: ' + purposeName);
+                });
+            }
+
+            // 無料プラン
+            if (currentFilters.hasFree) {
+                hasFilters = true;
+                addFilterTag('free', 'true', '無料プランあり');
+            }
+
+            // 表示/非表示の切り替え
+            selectedFiltersContainer.style.display = hasFilters ? 'flex' : 'none';
+        }
+
+        // フィルタータグを追加する関数
+        function addFilterTag(type, value, text) {
+            const tag = document.createElement('div');
+            tag.className = 'selected-filter-tag';
+            tag.dataset.type = type;
+            tag.dataset.value = value;
+
+            tag.innerHTML = `
+                ${text}
+                <span class="selected-filter-tag-remove">&times;</span>
+            `;
+
+            // タグの削除ボタンにイベントリスナーを追加
+            tag.querySelector('.selected-filter-tag-remove').addEventListener('click', function() {
+                removeFilter(type, value);
+            });
+
+            selectedFiltersTags.appendChild(tag);
+        }
+
+        // フィルターを削除する関数
+        function removeFilter(type, value) {
+            switch (type) {
+                case 'keyword':
+                    currentFilters.keyword = '';
+                    if (keywordSearch) keywordSearch.value = '';
+                    if (modalKeywordSearch) modalKeywordSearch.value = '';
+                    break;
+                case 'category':
+                    currentFilters.categories = currentFilters.categories.filter(item => item !== value);
+                    // チェックボックスの状態を更新
+                    const categoryCheckbox = document.querySelector(`input[name="category[]"][value="${value}"]`);
+                    if (categoryCheckbox) categoryCheckbox.checked = false;
+                    // カテゴリフィルターも更新
+                    if (categoryFilter && currentFilters.categories.length === 0) {
+                        categoryFilter.value = 'all';
+                    }
+                    break;
+                case 'feature':
+                    currentFilters.features = currentFilters.features.filter(item => item !== value);
+                    const featureCheckbox = document.querySelector(`input[name="feature[]"][value="${value}"]`);
+                    if (featureCheckbox) featureCheckbox.checked = false;
+                    break;
+                case 'purpose':
+                    currentFilters.purposes = currentFilters.purposes.filter(item => item !== value);
+                    const purposeCheckbox = document.querySelector(`input[name="purpose[]"][value="${value}"]`);
+                    if (purposeCheckbox) purposeCheckbox.checked = false;
+                    break;
+                case 'free':
+                    currentFilters.hasFree = false;
+                    if (freePlanFilter) freePlanFilter.checked = false;
+                    break;
+            }
+
+            // フィルターを適用して結果を更新
+            fetchFilteredTools(
+                currentFilters.categories,
+                currentFilters.features,
+                currentFilters.purposes,
+                currentFilters.keyword,
+                currentFilters.sort,
+                currentFilters.hasFree
+            );
+
+            // 選択した条件の表示を更新
+            updateSelectedFilters();
+        }
+
+        // すべてのフィルターをクリアする
+        if (clearAllFiltersBtn) {
+            clearAllFiltersBtn.addEventListener('click', function() {
+                // すべてのフィルターをリセット
+                currentFilters = {
+                    categories: [],
+                    features: [],
+                    purposes: [],
+                    keyword: '',
+                    hasFree: false,
+                    sort: currentFilters.sort // ソート順は維持
+                };
+
+                // チェックボックスをリセット
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+
+                // 検索フィールドをリセット
+                if (keywordSearch) keywordSearch.value = '';
+                if (modalKeywordSearch) modalKeywordSearch.value = '';
+
+                // セレクトボックスをリセット
+                if (categoryFilter) categoryFilter.value = 'all';
+
+                // フィルターを適用して結果を更新
+                fetchFilteredTools([], [], [], '', currentFilters.sort, false);
+
+                // 選択した条件の表示を更新
+                updateSelectedFilters();
+            });
+        }
 
         // モーダルを開いたときに既存の選択状態を反映する
         function syncFiltersToModal() {
-            // キーワード検索を同期
-            if (keywordSearch && modalKeywordSearch) {
-                modalKeywordSearch.value = keywordSearch.value;
+            // カテゴリの選択状態を反映
+            if (currentFilters.categories.length > 0) {
+                currentFilters.categories.forEach(category => {
+                    const checkbox = filterModal.querySelector(`input[name="category[]"][value="${category}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
             }
 
-            // 並び替え選択を同期
-            if (sortFilter && modalSortFilter) {
-                modalSortFilter.value = sortFilter.value;
+            // 機能の選択状態を反映
+            if (currentFilters.features.length > 0) {
+                currentFilters.features.forEach(feature => {
+                    const checkbox = filterModal.querySelector(`input[name="feature[]"][value="${feature}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
             }
 
-            // カテゴリ選択を同期
-            if (categoryFilter) {
-                const selectedCategory = categoryFilter.value;
-                if (selectedCategory && selectedCategory !== 'all') {
-                    const categoryCheckbox = filterModal.querySelector(`input[name="category[]"][value="${selectedCategory}"]`);
-                    if (categoryCheckbox) {
-                        categoryCheckbox.checked = true;
-                    }
-                }
+            // 目的の選択状態を反映
+            if (currentFilters.purposes.length > 0) {
+                currentFilters.purposes.forEach(purpose => {
+                    const checkbox = filterModal.querySelector(`input[name="purpose[]"][value="${purpose}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            // キーワードの反映
+            if (modalKeywordSearch && currentFilters.keyword) {
+                modalKeywordSearch.value = currentFilters.keyword;
+            }
+
+            // 無料プランフィルターの反映
+            if (freePlanFilter) {
+                freePlanFilter.checked = currentFilters.hasFree;
+            }
+
+            // 並び替えの反映
+            if (modalSortFilter) {
+                modalSortFilter.value = currentFilters.sort;
             }
         }
+
+        // フィルター結果を取得する関数
+        function fetchFilteredTools(categories, features, purposes, keyword, sort, hasFree, page = 1) {
+            // ローディング表示
+            const toolsContainer = document.getElementById('tools-grid-container');
+            if (toolsContainer) {
+                toolsContainer.innerHTML = '<div class="loading">検索中...<div class="loading-spinner"></div></div>';
+            }
+
+            // AJAXリクエストのデータ
+            const data = {
+                action: 'filter_ai_tools',
+                categories: categories,
+                features: features,
+                purposes: purposes,
+                keyword: keyword,
+                sort: sort,
+                has_free: hasFree ? 1 : 0,
+                paged: page,
+                nonce: ajax_object.nonce // WP用のセキュリティノンス
+            };
+
+            console.log('フィルターリクエスト:', data);
+
+            // フェッチAPIでリクエスト
+            fetch(ajax_object.ajax_url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API応答:', data);
+
+                    if (data.success && toolsContainer) {
+                        toolsContainer.innerHTML = data.data.html;
+
+                        // ページネーションの更新
+                        const paginationContainer = document.getElementById('tools-pagination');
+                        if (paginationContainer) {
+                            paginationContainer.innerHTML = data.data.pagination;
+
+                            // ページネーションのイベントリスナーを再設定
+                            setupPaginationListeners();
+                        }
+
+                        // ツールのカウントを更新
+                        const toolsTitle = document.querySelector('.tools-title');
+                        if (toolsTitle && data.data.count !== undefined) {
+                            toolsTitle.textContent = `全${data.data.count}件の生成AIツール`;
+                        }
+
+                        // スクロール位置を調整
+                        const aiToolsList = document.getElementById('ai-tools-list');
+                        if (aiToolsList) {
+                            window.scrollTo({
+                                top: aiToolsList.offsetTop - 100,
+                                behavior: 'smooth'
+                            });
+                        }
+                    } else if (toolsContainer) {
+                        toolsContainer.innerHTML = '<p>エラーが発生しました。もう一度お試しください。</p>';
+                        console.error('レスポンスエラー:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (toolsContainer) {
+                        toolsContainer.innerHTML = '<p>エラーが発生しました。もう一度お試しください。</p>';
+                    }
+                });
+        }
+
+        // ページネーションのイベントリスナーを設定する関数
+        function setupPaginationListeners() {
+            const pageLinks = document.querySelectorAll('#tools-pagination .page-link');
+            pageLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.dataset.page;
+
+                    if (page) {
+                        fetchFilteredTools(
+                            currentFilters.categories,
+                            currentFilters.features,
+                            currentFilters.purposes,
+                            currentFilters.keyword,
+                            currentFilters.sort,
+                            currentFilters.hasFree,
+                            page
+                        );
+                    }
+                });
+            });
+        }
+
+        // 初期ページネーションのイベントリスナーを設定
+        setupPaginationListeners();
 
         // モーダルを開く
         if (openFilterModal) {
@@ -809,16 +1198,14 @@ get_header();
         // モーダルを閉じる
         if (closeFilterModal) {
             closeFilterModal.addEventListener('click', function() {
-                filterModal.style.display = 'none';
-                document.body.style.overflow = ''; // スクロールを有効化
+                closeModal();
             });
         }
 
         // モーダル外クリックで閉じる
         window.addEventListener('click', function(event) {
             if (event.target === filterModal) {
-                filterModal.style.display = 'none';
-                document.body.style.overflow = ''; // スクロールを有効化
+                closeModal();
             }
         });
 
@@ -836,14 +1223,11 @@ get_header();
                     modalKeywordSearch.value = '';
                 }
 
-                // 並び替えをデフォルトに戻す
-                if (modalSortFilter) {
-                    modalSortFilter.value = 'newest';
-                }
+                // 並び替えはリセットしない（現在の値を維持）
             });
         }
 
-        // フィルターを適用
+        // フィルターを適用 - モーダルの「検索する」ボタン
         if (applyFilterBtn) {
             applyFilterBtn.addEventListener('click', function() {
                 // 選択されたカテゴリを取得
@@ -867,6 +1251,16 @@ get_header();
                 // 無料プランフィルター状態を取得
                 const hasFree = freePlanFilter ? freePlanFilter.checked : false;
 
+                // 現在のフィルター状態を更新
+                currentFilters = {
+                    categories: selectedCategories,
+                    features: selectedFeatures,
+                    purposes: selectedPurposes,
+                    keyword: keyword,
+                    hasFree: hasFree,
+                    sort: sort
+                };
+
                 // メインの検索フィールドとセレクトボックスに反映
                 if (keywordSearch) {
                     keywordSearch.value = keyword;
@@ -885,250 +1279,266 @@ get_header();
                     }
                 }
 
+                // 選択した条件の表示を更新
+                updateSelectedFilters();
+
                 // AJAXリクエストを送信
                 fetchFilteredTools(selectedCategories, selectedFeatures, selectedPurposes, keyword, sort, hasFree);
 
                 // モーダルを閉じる
-                filterModal.style.display = 'none';
-                document.body.style.overflow = ''; // スクロールを有効化
+                closeModal();
             });
         }
 
-        // フィルター結果を取得する関数
-        function fetchFilteredTools(categories, features, purposes, keyword, sort, hasFree, page = 1) {
-            // ローディング表示
-            const toolsContainer = document.getElementById('tools-grid-container');
-            toolsContainer.innerHTML = '<div class="loading">検索中...</div>';
-
-            // AJAXリクエストのデータ
-            const data = {
-                action: 'filter_ai_tools',
-                categories: categories,
-                features: features,
-                purposes: purposes,
-                keyword: keyword,
-                sort: sort,
-                has_free: hasFree ? 1 : 0,
-                paged: page,
-                security: ajax_object.nonce // WP用のセキュリティノンス（別途設定が必要）
-            };
-
-            // フェッチAPIでリクエスト
-            fetch(ajax_object.ajax_url, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams(data)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        toolsContainer.innerHTML = data.data.html;
-
-                        // ページネーションの更新
-                        const paginationContainer = document.getElementById('tools-pagination');
-                        if (paginationContainer) {
-                            paginationContainer.innerHTML = data.data.pagination;
-                        }
-
-                        // ツールのカウントを更新
-                        const toolsTitle = document.querySelector('.tools-title');
-                        if (toolsTitle && data.data.count !== undefined) {
-                            toolsTitle.textContent = `全${data.data.count}件の生成AIツール`;
-                        }
-
-                        // スクロール位置を調整
-                        window.scrollTo({
-                            top: document.getElementById('ai-tools-list').offsetTop - 100,
-                            behavior: 'smooth'
-                        });
-                    } else {
-                        toolsContainer.innerHTML = '<p>エラーが発生しました。もう一度お試しください。</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    toolsContainer.innerHTML = '<p>エラーが発生しました。もう一度お試しください。</p>';
-                });
-        }
-
-        // ページネーションのクリックイベントを委任
-        document.addEventListener('click', function(e) {
-            if (e.target.matches('#tools-pagination .page-link')) {
+        // カテゴリアイコンクリック時
+        const categoryIcons = document.querySelectorAll('.category-icon-item');
+        categoryIcons.forEach(icon => {
+            icon.addEventListener('click', function(e) {
                 e.preventDefault();
-                const page = e.target.dataset.page;
-                if (page) {
-                    // 現在のフィルター状態を取得
-                    const categories = Array.from(filterModal.querySelectorAll('input[name="category[]"]:checked'))
-                        .map(checkbox => checkbox.value);
-                    const features = Array.from(filterModal.querySelectorAll('input[name="feature[]"]:checked'))
-                        .map(checkbox => checkbox.value);
-                    const purposes = Array.from(filterModal.querySelectorAll('input[name="purpose[]"]:checked'))
-                        .map(checkbox => checkbox.value);
-                    const keyword = keywordSearch ? keywordSearch.value : '';
-                    const sort = sortFilter ? sortFilter.value : 'newest';
-                    const hasFree = freePlanFilter ? freePlanFilter.checked : false;
+                const category = this.dataset.category;
 
-                    fetchFilteredTools(categories, features, purposes, keyword, sort, hasFree, page);
-                }
-            }
-        });
-
-        // タグのアクティブ状態を視覚的にフィードバック
-        const tagInputs = document.querySelectorAll('.filter-tag-input');
-        tagInputs.forEach(input => {
-            input.addEventListener('change', function() {
-                if (this.checked) {
-                    this.parentElement.classList.add('active');
-                } else {
-                    this.parentElement.classList.remove('active');
-                }
-            });
-        });
-    });
-
-    // jQueryを手動で読み込む
-    var jqueryScript = document.createElement('script');
-    jqueryScript.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
-    jqueryScript.onload = function() {
-        console.log('jQuery手動読み込み完了');
-        initializeFilters();
-    };
-    document.head.appendChild(jqueryScript);
-
-    function initializeFilters() {
-        console.log('フィルター初期化開始');
-
-        // jQueryを使用
-        jQuery(document).ready(function($) {
-            console.log('jQuery実行開始');
-
-            // セレクトボックスの選択肢をデバッグ出力
-            console.log('カテゴリセレクトボックスの選択肢:');
-            $('#category-filter option').each(function() {
-                console.log($(this).val() + ' - ' + $(this).text());
-            });
-
-            // カテゴリフィルターとソートの変更を検知
-            $('#category-filter, #sort-filter').on('change', function() {
-                console.log('フィルター変更: ' + $(this).val());
-                filterAndSortTools();
-            });
-
-            // カテゴリアイコンクリック時
-            $('.category-icon-item').on('click', function(e) {
-                e.preventDefault();
-                var category = $(this).data('category');
-                console.log('カテゴリアイコンクリック: ' + category);
+                // アイコンのアクティブ状態を更新
+                categoryIcons.forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
 
                 // セレクトボックスの値を変更
-                if (category) {
-                    // セレクトボックスに該当する値があるか確認
-                    var found = false;
-                    $('#category-filter option').each(function() {
-                        if ($(this).val() === category) {
-                            found = true;
-                            return false; // eachループを抜ける
-                        }
-                    });
+                if (categoryFilter) {
+                    categoryFilter.value = category;
+                }
 
-                    if (found) {
-                        $('#category-filter').val(category).trigger('change');
-                        console.log('セレクトボックス値設定: ' + category);
-                    } else {
-                        console.log('セレクトボックスに該当する値がありません: ' + category);
-                        // 全てのカテゴリを選択
-                        $('#category-filter').val('all').trigger('change');
-                    }
+                // 現在のフィルター状態を更新
+                if (category === 'all') {
+                    currentFilters.categories = [];
                 } else {
-                    console.error('カテゴリデータ属性が設定されていません');
+                    currentFilters.categories = [category];
                 }
-            });
 
-            // 検索ボタンクリック時
-            $('#ai-tool-search-button').on('click', function() {
-                filterAndSortTools();
-            });
-
-            // Enterキー押下時も検索実行
-            $('#ai-tool-search').on('keypress', function(e) {
-                if (e.which === 13) {
-                    filterAndSortTools();
-                }
-            });
-
-            // ページネーションのクリックイベントを委任
-            $(document).on('click', '#tools-pagination .page-link', function(e) {
-                e.preventDefault();
-                var page = $(this).data('page');
-                if (page) {
-                    console.log('ページネーションクリック: ページ ' + page);
-                    filterAndSortTools(page);
-                }
-            });
-
-            function filterAndSortTools(page = 1) {
-                var category = $('#category-filter').val();
-                var sort = $('#sort-filter').val();
-                var keyword = $('#ai-tool-search').val();
-
-                console.log('フィルタリング実行:');
-                console.log('カテゴリ: ' + category);
-                console.log('並び順: ' + sort);
-                console.log('キーワード: ' + keyword);
-                console.log('ページ: ' + page);
-
-                // ローディング表示
-                $('#tools-grid-container').html('<p class="loading-text">読み込み中...</p>');
-
-                $.ajax({
-                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
-                    type: 'POST',
-                    data: {
-                        action: 'filter_ai_tools',
-                        category: category,
-                        sort: sort,
-                        keyword: keyword,
-                        paged: page,
-                        nonce: '<?php echo wp_create_nonce('filter_ai_tools_nonce'); ?>'
-                    },
-                    beforeSend: function() {
-                        console.log('Ajaxリクエスト送信データ:', {
-                            action: 'filter_ai_tools',
-                            category: category,
-                            sort: sort,
-                            keyword: keyword,
-                            paged: page
-                        });
-                    },
-                    success: function(response) {
-                        console.log('Ajax成功:', response);
-                        if (response.success) {
-                            $('#tools-grid-container').html(response.data.html);
-                            $('#tools-pagination').html(response.data.pagination);
-
-                            // スクロール位置を調整
-                            $('html, body').animate({
-                                scrollTop: $('#ai-tools-list').offset().top - 100
-                            }, 500);
-                        } else {
-                            $('#tools-grid-container').html('<p>エラーが発生しました。再度お試しください。</p>');
-                            console.error('レスポンスエラー:', response);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        $('#tools-grid-container').html('<p>エラーが発生しました。再度お試しください。</p>');
-                        console.error('Ajaxエラー:', status, error);
-                        console.error('レスポンステキスト:', xhr.responseText);
-                    }
+                // モーダル内のチェックボックスを更新
+                const categoryCheckboxes = filterModal.querySelectorAll('input[name="category[]"]');
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.checked = currentFilters.categories.includes(checkbox.value);
                 });
-            }
 
-            console.log('jQuery実行完了');
+                // 選択した条件の表示を更新
+                updateSelectedFilters();
+
+                // フィルターを適用
+                fetchFilteredTools(
+                    currentFilters.categories,
+                    currentFilters.features,
+                    currentFilters.purposes,
+                    currentFilters.keyword,
+                    currentFilters.sort,
+                    currentFilters.hasFree
+                );
+            });
         });
 
-        console.log('フィルター初期化完了');
-    }
+        // カテゴリフィルター変更時
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
+                const selectedCategory = this.value;
+
+                // アイコンの状態を更新
+                categoryIcons.forEach(icon => {
+                    if ((icon.dataset.category === selectedCategory) ||
+                        (selectedCategory === 'all' && icon.dataset.category === 'all')) {
+                        icon.classList.add('active');
+                    } else {
+                        icon.classList.remove('active');
+                    }
+                });
+
+                // currentFilters を更新
+                if (selectedCategory === 'all') {
+                    currentFilters.categories = [];
+                } else {
+                    currentFilters.categories = [selectedCategory];
+                }
+
+                // モーダル内のチェックボックスを更新
+                const categoryCheckboxes = filterModal.querySelectorAll('input[name="category[]"]');
+                categoryCheckboxes.forEach(checkbox => {
+                    checkbox.checked = currentFilters.categories.includes(checkbox.value);
+                });
+
+                // 選択した条件の表示を更新
+                updateSelectedFilters();
+
+                // フィルターを適用
+                fetchFilteredTools(
+                    currentFilters.categories,
+                    currentFilters.features,
+                    currentFilters.purposes,
+                    currentFilters.keyword,
+                    currentFilters.sort,
+                    currentFilters.hasFree
+                );
+            });
+        }
+
+        // 並び替えフィルター変更時
+        if (sortFilter) {
+            sortFilter.addEventListener('change', function() {
+                currentFilters.sort = this.value;
+
+                fetchFilteredTools(
+                    currentFilters.categories,
+                    currentFilters.features,
+                    currentFilters.purposes,
+                    currentFilters.keyword,
+                    currentFilters.sort,
+                    currentFilters.hasFree
+                );
+            });
+        }
+
+        // 検索ボタンクリック時
+        if (searchButton) {
+            searchButton.addEventListener('click', function() {
+                if (keywordSearch) {
+                    currentFilters.keyword = keywordSearch.value;
+                    updateSelectedFilters();
+
+                    fetchFilteredTools(
+                        currentFilters.categories,
+                        currentFilters.features,
+                        currentFilters.purposes,
+                        currentFilters.keyword,
+                        currentFilters.sort,
+                        currentFilters.hasFree
+                    );
+                }
+            });
+        }
+
+        // キーワード検索でEnterキー押下時
+        if (keywordSearch) {
+            keywordSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    currentFilters.keyword = keywordSearch.value;
+                    updateSelectedFilters();
+
+                    fetchFilteredTools(
+                        currentFilters.categories,
+                        currentFilters.features,
+                        currentFilters.purposes,
+                        currentFilters.keyword,
+                        currentFilters.sort,
+                        currentFilters.hasFree
+                    );
+                }
+            });
+        }
+
+        // モーダル内キーワード検索でEnterキー押下時
+        if (modalKeywordSearch) {
+            modalKeywordSearch.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && applyFilterBtn) {
+                    applyFilterBtn.click();
+                }
+            });
+        }
+    });
 </script>
+
+<style>
+    /* 選択した詳細条件の表示エリア */
+    .selected-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        background-color: var(--bg-light);
+        border-radius: 6px;
+    }
+
+    .selected-filters-title {
+        font-size: 14px;
+        color: var(--text);
+        font-weight: 600;
+    }
+
+    .selected-filters-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .selected-filter-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        background-color: var(--main-light);
+        color: var(--main-dark);
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .selected-filter-tag-remove {
+        margin-left: 6px;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        opacity: 0.7;
+    }
+
+    .selected-filter-tag-remove:hover {
+        opacity: 1;
+    }
+
+    .selected-filters-clear {
+        background: none;
+        border: none;
+        color: var(--text-light);
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 8px;
+        text-decoration: underline;
+    }
+
+    .selected-filters-clear:hover {
+        color: var(--main-dark);
+    }
+
+    /* ローディングスピナー */
+    .loading {
+        text-align: center;
+        padding: 30px;
+        color: var(--text-light);
+        font-size: 16px;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--main-color);
+        animation: spin 1s ease-in-out infinite;
+        margin-top: 10px;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .selected-filters {
+            padding: 8px 12px;
+        }
+
+        .selected-filters-title {
+            font-size: 12px;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
+</style>
